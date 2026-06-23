@@ -1,0 +1,18 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v4.6.2
+_src_path: https://github.com/jupyterlab/extension-template
+advanced: false
+author_email: levicito2012@gmail.com
+author_name: Levi
+create_claude_symlink: true
+create_gemini_symlink: true
+has_ai_rules: true
+has_binder: false
+has_settings: false
+kind: frontend-and-server
+labextension_name: LinkMaker
+project_short_description: A JupyterLab extension.
+python_name: LinkMaker
+repository: https://github.com/Levi-coder07/JupyterExtension
+test: false
+
