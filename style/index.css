@@ -1,1 +1,155 @@
 @import url('base.css');
+
+.jp-LinkMaker-panel {
+  height: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.jp-LinkMaker-panelBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow-x: hidden;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.jp-LinkMaker-section,
+.jp-LinkMaker-cell,
+.jp-LinkMaker-output {
+  background: var(--jp-layout-color1);
+  border: 1px solid var(--jp-border-color2);
+  border-radius: 10px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
+  padding: 12px;
+}
+
+.jp-LinkMaker-title,
+.jp-LinkMaker-cardTitle,
+.jp-LinkMaker-outputTitle,
+.jp-LinkMaker-sectionTitle {
+  margin: 0 0 8px;
+}
+
+.jp-LinkMaker-title {
+  font-size: var(--jp-ui-font-size2);
+}
+
+.jp-LinkMaker-subtitle {
+  color: var(--jp-ui-font-color2);
+  line-height: 1.4;
+  margin-top: 4px;
+  word-break: break-word;
+}
+
+.jp-LinkMaker-summary {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  margin-top: 12px;
+}
+
+.jp-LinkMaker-summaryItem {
+  background: var(--jp-layout-color2);
+  border: 1px solid var(--jp-border-color2);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.jp-LinkMaker-summaryValue {
+  font-size: var(--jp-ui-font-size3);
+  font-weight: 700;
+}
+
+.jp-LinkMaker-summaryLabel {
+  color: var(--jp-ui-font-color2);
+  margin-top: 4px;
+}
+
+.jp-LinkMaker-outputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.jp-LinkMaker-mediaGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.jp-LinkMaker-mediaCard {
+  background: var(--jp-layout-color2);
+  border: 1px solid var(--jp-border-color2);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.jp-LinkMaker-mediaTitle {
+  font-weight: 700;
+}
+
+.jp-LinkMaker-mediaMeta {
+  color: var(--jp-ui-font-color2);
+  font-size: var(--jp-ui-font-size0);
+  margin-top: 4px;
+}
+
+.jp-LinkMaker-mediaActions {
+  margin-top: 10px;
+}
+
+.jp-LinkMaker-saveButton {
+  background: var(--jp-brand-color1);
+  border: 1px solid var(--jp-brand-color1);
+  border-radius: 6px;
+  color: var(--jp-ui-inverse-font-color1);
+  cursor: pointer;
+  font: inherit;
+  padding: 6px 10px;
+}
+
+.jp-LinkMaker-saveButton:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.jp-LinkMaker-mediaPreview {
+  background: var(--jp-layout-color1);
+  border: 1px solid var(--jp-border-color2);
+  border-radius: 8px;
+  margin: 10px 0;
+  overflow: auto;
+  padding: 8px;
+}
+
+.jp-LinkMaker-mediaImage {
+  display: block;
+  height: auto;
+  max-width: 100%;
+}
+
+.jp-LinkMaker-pre {
+  background: var(--jp-layout-color2);
+  border-radius: 8px;
+  margin: 0;
+  overflow-x: auto;
+  overflow-y: auto;
+  padding: 10px;
+  max-height: 320px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.jp-LinkMaker-message {
+  background: var(--jp-layout-color1);
+  border: 1px dashed var(--jp-border-color2);
+  border-radius: 10px;
+  color: var(--jp-ui-font-color2);
+  line-height: 1.5;
+  padding: 12px;
+}

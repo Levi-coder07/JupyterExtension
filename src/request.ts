@@ -30,22 +30,33 @@ export async function requestAPI<T>(
       serverSettings
     );
   } catch (error) {
-    throw new ServerConnection.NetworkError(error as any);
+    throw new ServerConnection.NetworkError(
+      error instanceof Error ? error : new Error(String(error))
+    );
   }
 
-  let data: any = await response.text();
+  let data: unknown = await response.text();
 
-  if (data.length > 0) {
+  if (typeof data === 'string' && data.length > 0) {
     try {
       data = JSON.parse(data);
     } catch (error) {
-      console.log('Not a JSON response body.', response);
+      console.warn('LinkMaker received a non-JSON response body.', response);
     }
   }
 
   if (!response.ok) {
-    throw new ServerConnection.ResponseError(response, data.message || data);
+    const message =
+      typeof data === 'object' &&
+      data !== null &&
+      'message' in data &&
+      typeof data.message === 'string'
+        ? data.message
+        : typeof data === 'string'
+          ? data
+          : JSON.stringify(data);
+    throw new ServerConnection.ResponseError(response, message);
   }
 
-  return data;
+  return data as T;
 }
