@@ -1,0 +1,1711 @@
+{
+  "version": 1,
+  "notebookPath": "titanic.ipynb",
+  "model": "gpt-5-mini",
+  "reasoningEffort": "low",
+  "startedAt": "2026-09-08T00:08:27.918369+00:00",
+  "latencySeconds": 92.21841575019062,
+  "groundTruth": {
+    "path": "evaluation/baselines/titanic_code_only_v0_baseline.json",
+    "scope": "code-only; outputs and sketches excluded",
+    "uniquePairs": 36
+  },
+  "metrics": {
+    "predictions": 43,
+    "truePositives": 26,
+    "falsePositives": 17,
+    "falseNegatives": 10,
+    "precision": 0.6046511627906976,
+    "recall": 0.7222222222222222,
+    "f1": 0.6582278481012659
+  },
+  "markdownAnalyses": [
+    {
+      "markdownCell": {
+        "id": "cell-0",
+        "index": 0,
+        "metadata": {
+          "_cell_guid": "ea25cdf7-bdbc-3cf1-0737-bc51675e3374",
+          "_uuid": "fed5696c67bf55a553d6d04313a77e8c617cad99"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "The notebook walks us through a typical workflow for solving data science competitions at sites like Kaggle.",
+            "startOffset": 186,
+            "endOffset": 294
+          },
+          "codeTarget": {
+            "id": "cell-2",
+            "index": 2,
+            "metadata": {
+              "_cell_guid": "5767a33c-8f18-4034-e52d-bf7a8f7d8ab8",
+              "_uuid": "847a9b3972a6be2d2f3346ff01fea976d92ecdb6"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "import pandas as pd\nimport numpy as np\nimport random as rnd",
+              "startOffset": 30,
+              "endOffset": 89
+            }
+          },
+          "relationshipType": "setup_description",
+          "confidence": 0.9,
+          "reason": "Markdown states the notebook will walk through typical workflow; the code imports core data libraries (pandas, numpy, random) used throughout that workflow."
+        },
+        {
+          "markdownPortion": {
+            "text": "The notebook walks us through a typical workflow for solving data science competitions at sites like Kaggle.",
+            "startOffset": 186,
+            "endOffset": 294
+          },
+          "codeTarget": {
+            "id": "cell-2",
+            "index": 2,
+            "metadata": {
+              "_cell_guid": "5767a33c-8f18-4034-e52d-bf7a8f7d8ab8",
+              "_uuid": "847a9b3972a6be2d2f3346ff01fea976d92ecdb6"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "from sklearn.linear_model import LogisticRegression\nfrom sklearn.svm import SVC, LinearSVC\nfrom sklearn.ensemble import RandomForestClassifier\nfrom sklearn.neighbors import KNeighborsClassifier\nfrom sklearn.naive_bayes import GaussianNB\nfrom sklearn.linear_model import Perceptron\nfrom sklearn.linear_model import SGDClassifier\nfrom sklearn.tree import DecisionTreeClassifier",
+              "startOffset": 200,
+              "endOffset": 575
+            }
+          },
+          "relationshipType": "setup_description",
+          "confidence": 0.9,
+          "reason": "Markdown mentions solving competitions (modeling); the code imports many ML algorithms used later for model comparison."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-1",
+        "index": 1,
+        "metadata": {
+          "_cell_guid": "56a3be4e-76ef-20c6-25e8-da16147cf6d7",
+          "_uuid": "960f8b1937dc4915ce1eb0f82614b1985c4321a4"
+        }
+      },
+      "relationships": []
+    },
+    {
+      "markdownCell": {
+        "id": "cell-3",
+        "index": 3,
+        "metadata": {
+          "_cell_guid": "6b5dc743-15b1-aac6-405e-081def6ecca1",
+          "_uuid": "2d307b99ee3d19da3c1cddf509ed179c21dec94a"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "We start by acquiring the training and testing datasets into Pandas DataFrames. We also combine these datasets to run certain operations on both datasets together.",
+            "startOffset": 77,
+            "endOffset": 240
+          },
+          "codeTarget": {
+            "id": "cell-4",
+            "index": 4,
+            "metadata": {
+              "_cell_guid": "e7319668-86fe-8adc-438d-0eef3fd0a982",
+              "_uuid": "13f38775c12ad6f914254a08f0d1ef948a2bd453"
+            },
+            "scope": "whole_cell",
+            "portion": {
+              "text": "train_df = pd.read_csv('../input/train.csv')\ntest_df = pd.read_csv('../input/test.csv')\ncombine = [train_df, test_df]",
+              "startOffset": 0,
+              "endOffset": 117
+            }
+          },
+          "relationshipType": "data_acquisition_and_combination",
+          "confidence": 0.98,
+          "reason": "Markdown explicitly describes loading train and test into DataFrames and combining them; the code reads CSVs into train_df and test_df and creates combine list."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-5",
+        "index": 5,
+        "metadata": {
+          "_cell_guid": "3d6188f3-dc82-8ae6-dabd-83e28fcbf10d",
+          "_uuid": "79282222056237a52bbbb1dbd831f057f1c23d69"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "**Which features are available in the dataset?**",
+            "startOffset": 124,
+            "endOffset": 172
+          },
+          "codeTarget": {
+            "id": "cell-6",
+            "index": 6,
+            "metadata": {
+              "_cell_guid": "ce473d29-8d19-76b8-24a4-48c217286e42",
+              "_uuid": "ef106f38a00e162a80c523778af6dcc778ccc1c2"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "print(train_df.columns.values)",
+              "startOffset": 0,
+              "endOffset": 30
+            }
+          },
+          "relationshipType": "feature_listing",
+          "confidence": 0.95,
+          "reason": "Markdown asks which features are available; code prints the column names to show available features."
+        },
+        {
+          "markdownPortion": {
+            "text": "Noting the feature names for directly manipulating or analyzing these.",
+            "startOffset": 174,
+            "endOffset": 244
+          },
+          "codeTarget": {
+            "id": "cell-8",
+            "index": 8,
+            "metadata": {
+              "_cell_guid": "8d7ac195-ac1a-30a4-3f3f-80b8cf2c1c0f",
+              "_uuid": "e068cd3a0465b65a0930a100cb348b9146d5fd2f"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "train_df.head()",
+              "startOffset": 19,
+              "endOffset": 34
+            }
+          },
+          "relationshipType": "data_preview",
+          "confidence": 0.95,
+          "reason": "Markdown mentions noting feature names and inspecting data; train_df.head() previews rows and columns."
+        },
+        {
+          "markdownPortion": {
+            "text": "Noting the feature names for directly manipulating or analyzing these.",
+            "startOffset": 174,
+            "endOffset": 244
+          },
+          "codeTarget": {
+            "id": "cell-10",
+            "index": 10,
+            "metadata": {
+              "_cell_guid": "f6e761c2-e2ff-d300-164c-af257083bb46",
+              "_uuid": "3488e80f309d29f5b68bbcfaba8d78da84f4fb7d"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "train_df.tail()",
+              "startOffset": 0,
+              "endOffset": 15
+            }
+          },
+          "relationshipType": "data_preview",
+          "confidence": 0.9,
+          "reason": "tail() provides additional preview of dataset rows, supporting inspecting features as described."
+        },
+        {
+          "markdownPortion": {
+            "text": "Pandas also helps describe the datasets answering following questions early in our project.",
+            "startOffset": 31,
+            "endOffset": 122
+          },
+          "codeTarget": {
+            "id": "cell-12",
+            "index": 12,
+            "metadata": {
+              "_cell_guid": "9b805f69-665a-2b2e-f31d-50d87d52865d",
+              "_uuid": "817e1cf0ca1cb96c7a28bb81192d92261a8bf427"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "train_df.info()\nprint('_'*40)\ntest_df.info()",
+              "startOffset": 0,
+              "endOffset": 44
+            }
+          },
+          "relationshipType": "data_summary",
+          "confidence": 0.95,
+          "reason": "Markdown mentions describing datasets; info() gives data types and null counts as a description."
+        },
+        {
+          "markdownPortion": {
+            "text": "Pandas also helps describe the datasets answering following questions early in our project.",
+            "startOffset": 31,
+            "endOffset": 122
+          },
+          "codeTarget": {
+            "id": "cell-14",
+            "index": 14,
+            "metadata": {
+              "_cell_guid": "58e387fe-86e4-e068-8307-70e37fe3f37b",
+              "_uuid": "380251a1c1e0b89147d321968dc739b6cc0eecf2"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "train_df.describe()",
+              "startOffset": 0,
+              "endOffset": 19
+            }
+          },
+          "relationshipType": "statistical_summary",
+          "confidence": 0.95,
+          "reason": "describe() provides numerical summaries as described in markdown."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-7",
+        "index": 7,
+        "metadata": {
+          "_cell_guid": "cd19a6f6-347f-be19-607b-dca950590b37",
+          "_uuid": "1d7acf42af29a63bc038f14eded24e8b8146f541"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "- Categorical: Survived, Sex, and Embarked. Ordinal: Pclass.",
+            "startOffset": 270,
+            "endOffset": 330
+          },
+          "codeTarget": {
+            "id": "cell-16",
+            "index": 16,
+            "metadata": {
+              "_cell_guid": "8066b378-1964-92e8-1352-dcac934c6af3",
+              "_uuid": "daa8663f577f9c1a478496cf14fe363570457191"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "train_df.describe(include=['O'])",
+              "startOffset": 0,
+              "endOffset": 32
+            }
+          },
+          "relationshipType": "categorical_inspection",
+          "confidence": 0.9,
+          "reason": "Markdown lists categorical features; describe(include=['O']) summarizes object/string columns such as those categorical features."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-9",
+        "index": 9,
+        "metadata": {
+          "_cell_guid": "97f4e6f8-2fea-46c4-e4e8-b69062ee3d46",
+          "_uuid": "c34fa51a38336d97d5f6a184908cca37daebd584"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "Which features are mixed data types?",
+            "startOffset": 2,
+            "endOffset": 38
+          },
+          "codeTarget": {
+            "id": "cell-14",
+            "index": 14,
+            "metadata": {
+              "_cell_guid": "58e387fe-86e4-e068-8307-70e37fe3f37b",
+              "_uuid": "380251a1c1e0b89147d321968dc739b6cc0eecf2"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "train_df.describe()",
+              "startOffset": 0,
+              "endOffset": 19
+            }
+          },
+          "relationshipType": "mixed_type_inspection",
+          "confidence": 0.7,
+          "reason": "Markdown asks about mixed data types; describe() can help identify numeric columns but mixed types like Ticket/Cabin require inspection\u2014describe is a related diagnostic."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-11",
+        "index": 11,
+        "metadata": {
+          "_cell_guid": "8bfe9610-689a-29b2-26ee-f67cd4719079",
+          "_uuid": "699c52b7a8d076ccd5ea5bc5d606313c558a6e8e"
+        }
+      },
+      "relationships": []
+    },
+    {
+      "markdownCell": {
+        "id": "cell-13",
+        "index": 13,
+        "metadata": {
+          "_cell_guid": "859102e1-10df-d451-2649-2d4571e5f082",
+          "_uuid": "2b7c205bf25979e3242762bfebb0e3eb2fd63010"
+        }
+      },
+      "relationships": []
+    },
+    {
+      "markdownCell": {
+        "id": "cell-15",
+        "index": 15,
+        "metadata": {
+          "_cell_guid": "5462bc60-258c-76bf-0a73-9adc00a2f493",
+          "_uuid": "33bbd1709db622978c0c5879e7c5532d4734ade0"
+        }
+      },
+      "relationships": []
+    },
+    {
+      "markdownCell": {
+        "id": "cell-17",
+        "index": 17,
+        "metadata": {
+          "_cell_guid": "2cb22b88-937d-6f14-8b06-ea3361357889",
+          "_uuid": "c1d35ebd89a0cf7d7b409470bbb9ecaffd2a9680"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "2. We may want to complete the Embarked feature as it may also correlate with survival or another important feature.",
+            "startOffset": 499,
+            "endOffset": 615
+          },
+          "codeTarget": {
+            "id": "cell-65",
+            "index": 65,
+            "metadata": {
+              "_cell_guid": "51c21fcc-f066-cd80-18c8-3d140be6cbae",
+              "_uuid": "d85b5575fb45f25749298641f6a0a38803e1ff22"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "for dataset in combine:\n    dataset['Embarked'] = dataset['Embarked'].fillna(freq_port)",
+              "startOffset": 0,
+              "endOffset": 87
+            }
+          },
+          "relationshipType": "embarked_fill_mode",
+          "confidence": 0.96,
+          "reason": "Markdown recommends completing Embarked; code fills missing Embarked values with the most frequent port."
+        },
+        {
+          "markdownPortion": {
+            "text": "1. We may want to create a new feature called Family based on Parch and SibSp to get total count of family members on board.",
+            "startOffset": 1128,
+            "endOffset": 1252
+          },
+          "codeTarget": {
+            "id": "cell-56",
+            "index": 56,
+            "metadata": {
+              "_cell_guid": "7e6c04ed-cfaa-3139-4378-574fd095d6ba",
+              "_uuid": "33d1236ce4a8ab888b9fac2d5af1c78d174b32c7",
+              "jupyter": {
+                "source_hidden": true
+              }
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "dataset['FamilySize'] = dataset['SibSp'] + dataset['Parch'] + 1",
+              "startOffset": 28,
+              "endOffset": 91
+            }
+          },
+          "relationshipType": "feature_creation",
+          "confidence": 0.98,
+          "reason": "Markdown suggests creating Family from Parch and SibSp; code creates FamilySize as SibSp + Parch + 1."
+        },
+        {
+          "markdownPortion": {
+            "text": "2. We may want to engineer the Name feature to extract Title as a new feature.",
+            "startOffset": 1253,
+            "endOffset": 1331
+          },
+          "codeTarget": {
+            "id": "cell-34",
+            "index": 34,
+            "metadata": {
+              "_cell_guid": "df7f0cd4-992c-4a79-fb19-bf6f0c024d4b",
+              "_uuid": "c916644bd151f3dc8fca900f656d415b4c55e2bc"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "dataset['Title'] = dataset.Name.str.extract(' ([A-Za-z]+)\\.', expand=False)",
+              "startOffset": 28,
+              "endOffset": 103
+            }
+          },
+          "relationshipType": "feature_extraction_regex",
+          "confidence": 0.99,
+          "reason": "Markdown suggests extracting Title from Name; code uses regex to extract title into 'Title' column."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-18",
+        "index": 18,
+        "metadata": {
+          "_cell_guid": "6db63a30-1d86-266e-2799-dded03c45816",
+          "_uuid": "946ee6ca01a3e4eecfa373ca00f88042b683e2ad"
+        }
+      },
+      "relationships": []
+    },
+    {
+      "markdownCell": {
+        "id": "cell-23",
+        "index": 23,
+        "metadata": {
+          "_cell_guid": "0d43550e-9eff-3859-3568-8856570eff76",
+          "_uuid": "5c6204d01f5a9040cf0bb7c678686ae48daa201f"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "A histogram chart is useful for analyzing continous numerical variables like Age where banding or ranges will help identify useful patterns.",
+            "startOffset": 274,
+            "endOffset": 414
+          },
+          "codeTarget": {
+            "id": "cell-24",
+            "index": 24,
+            "metadata": {
+              "_cell_guid": "50294eac-263a-af78-cb7e-3778eb9ad41f",
+              "_uuid": "d3a1fa63e9dd4f8a810086530a6363c94b36d030"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "g = sns.FacetGrid(train_df, col='Survived')\ng.map(plt.hist, 'Age', bins=20)",
+              "startOffset": 0,
+              "endOffset": 75
+            }
+          },
+          "relationshipType": "visualization_histogram",
+          "confidence": 0.98,
+          "reason": "Markdown recommends histogram for Age; code draws a FacetGrid histogram of Age split by Survived."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-25",
+        "index": 25,
+        "metadata": {
+          "_cell_guid": "87096158-4017-9213-7225-a19aea67a800",
+          "_uuid": "892259f68c2ecf64fd258965cff1ecfe77dd73a9"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "We can combine multiple features for identifying correlations using a single plot.",
+            "startOffset": 48,
+            "endOffset": 130
+          },
+          "codeTarget": {
+            "id": "cell-26",
+            "index": 26,
+            "metadata": {
+              "_cell_guid": "916fdc6b-0190-9267-1ea9-907a3d87330d",
+              "_uuid": "4f5bcfa97c8a72f8b413c786954f3a68e135e05a",
+              "scrolled": true
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "grid = sns.FacetGrid(train_df, col='Survived', row='Pclass', size=2.2, aspect=1.6)\ngrid.map(plt.hist, 'Age', alpha=.5, bins=20)",
+              "startOffset": 63,
+              "endOffset": 190
+            }
+          },
+          "relationshipType": "multi_feature_visualization",
+          "confidence": 0.98,
+          "reason": "Markdown suggests combining features in plots (numerical and ordinal); code creates FacetGrid by Survived and Pclass and plots Age histograms."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-27",
+        "index": 27,
+        "metadata": {
+          "_cell_guid": "36f5a7c0-c55c-f76f-fdf8-945a32a68cb0",
+          "_uuid": "892ab7ee88b1b1c5f1ac987884fa31e111bb0507"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "Now we can correlate categorical features with our solution goal.",
+            "startOffset": 38,
+            "endOffset": 103
+          },
+          "codeTarget": {
+            "id": "cell-28",
+            "index": 28,
+            "metadata": {
+              "_cell_guid": "db57aabd-0e26-9ff9-9ebd-56d401cdf6e8",
+              "_uuid": "c0e1f01b3f58e8f31b938b0e5eb1733132edc8ad"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "grid = sns.FacetGrid(train_df, row='Embarked', size=2.2, aspect=1.6)\ngrid.map(sns.pointplot, 'Pclass', 'Survived', 'Sex', palette='deep')",
+              "startOffset": 49,
+              "endOffset": 186
+            }
+          },
+          "relationshipType": "categorical_correlation_visualization",
+          "confidence": 0.98,
+          "reason": "Markdown discusses correlating categorical features; code plots pointplot of Pclass vs Survived broken out by Embarked and Sex."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-29",
+        "index": 29,
+        "metadata": {
+          "_cell_guid": "6b3f73f4-4600-c1ce-34e0-bd7d9eeb074a",
+          "_uuid": "fd824f937dcb80edd4117a2927cc0d7f99d934b8"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "We may also want to correlate categorical features (with non-numeric values) and numeric features.",
+            "startOffset": 52,
+            "endOffset": 150
+          },
+          "codeTarget": {
+            "id": "cell-30",
+            "index": 30,
+            "metadata": {
+              "_cell_guid": "a21f66ac-c30d-f429-cc64-1da5460d16a9",
+              "_uuid": "c8fd535ac1bc90127369027c2101dbc939db118e"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "grid = sns.FacetGrid(train_df, row='Embarked', col='Survived', size=2.2, aspect=1.6)\ngrid.map(sns.barplot, 'Sex', 'Fare', alpha=.5, ci=None)",
+              "startOffset": 91,
+              "endOffset": 231
+            }
+          },
+          "relationshipType": "categorical_numerical_visualization",
+          "confidence": 0.98,
+          "reason": "Markdown suggests correlating categorical and numeric features; code creates barplot of Sex vs Fare broken out by Embarked and Survived."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-31",
+        "index": 31,
+        "metadata": {
+          "_cell_guid": "cfac6291-33cc-506e-e548-6cad9408623d",
+          "_uuid": "73a9111a8dc2a6b8b6c78ef628b6cae2a63fc33f"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "Based on our assumptions and decisions we want to drop the Cabin (correcting #2) and Ticket (correcting #1) features.",
+            "startOffset": 482,
+            "endOffset": 599
+          },
+          "codeTarget": {
+            "id": "cell-32",
+            "index": 32,
+            "metadata": {
+              "_cell_guid": "da057efe-88f0-bf49-917b-bb2fec418ed9",
+              "_uuid": "e328d9882affedcfc4c167aa5bb1ac132547558c"
+            },
+            "scope": "whole_cell",
+            "portion": {
+              "text": "print(\"Before\", train_df.shape, test_df.shape, combine[0].shape, combine[1].shape)\n\ntrain_df = train_df.drop(['Ticket', 'Cabin'], axis=1)\ntest_df = test_df.drop(['Ticket', 'Cabin'], axis=1)\ncombine = [train_df, test_df]\n\n\"After\", train_df.shape, test_df.shape, combine[0].shape, combine[1].shape",
+              "startOffset": 0,
+              "endOffset": 295
+            }
+          },
+          "relationshipType": "feature_removal",
+          "confidence": 0.99,
+          "reason": "Markdown instructs dropping Ticket and Cabin; code prints shapes then drops those columns from both datasets and updates combine."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-33",
+        "index": 33,
+        "metadata": {
+          "_cell_guid": "6b3a1216-64b6-7fe2-50bc-e89cc964a41c",
+          "_uuid": "21d5c47ee69f8fbef967f6f41d736b5d4eb6596f"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "In the following code we extract Title feature using regular expressions. The RegEx pattern `(\\w+\\.)` matches the first word which ends with a dot character within Name feature.",
+            "startOffset": 220,
+            "endOffset": 397
+          },
+          "codeTarget": {
+            "id": "cell-34",
+            "index": 34,
+            "metadata": {
+              "_cell_guid": "df7f0cd4-992c-4a79-fb19-bf6f0c024d4b",
+              "_uuid": "c916644bd151f3dc8fca900f656d415b4c55e2bc"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "dataset['Title'] = dataset.Name.str.extract(' ([A-Za-z]+)\\.', expand=False)",
+              "startOffset": 28,
+              "endOffset": 103
+            }
+          },
+          "relationshipType": "regex_extraction",
+          "confidence": 0.98,
+          "reason": "Markdown documents the regex extraction of Title; code uses str.extract with regex to create Title."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-35",
+        "index": 35,
+        "metadata": {
+          "_cell_guid": "908c08a6-3395-19a5-0cd7-13341054012a",
+          "_uuid": "f766d512ea5bfe60b5eb7a816f482f2ab688fd2f"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "We can replace many titles with a more common name or classify them as `Rare`.",
+            "startOffset": 0,
+            "endOffset": 78
+          },
+          "codeTarget": {
+            "id": "cell-36",
+            "index": 36,
+            "metadata": {
+              "_cell_guid": "553f56d7-002a-ee63-21a4-c0efad10cfe9",
+              "_uuid": "b8cd938fba61fb4e226c77521b012f4bb8aa01d0"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "dataset['Title'] = dataset['Title'].replace(['Lady', 'Countess','Capt', 'Col',\\\n \t'Don', 'Dr', 'Major', 'Rev', 'Sir', 'Jonkheer', 'Dona'], 'Rare')",
+              "startOffset": 28,
+              "endOffset": 174
+            }
+          },
+          "relationshipType": "title_grouping",
+          "confidence": 0.98,
+          "reason": "Markdown suggests grouping rare titles; code replaces many titles with 'Rare'."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-37",
+        "index": 37,
+        "metadata": {
+          "_cell_guid": "6d46be9a-812a-f334-73b9-56ed912c9eca",
+          "_uuid": "de245fe76474d46995a5acc31b905b8aaa5893f6"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "We can convert the categorical titles to ordinal.",
+            "startOffset": 0,
+            "endOffset": 49
+          },
+          "codeTarget": {
+            "id": "cell-38",
+            "index": 38,
+            "metadata": {
+              "_cell_guid": "67444ebc-4d11-bac1-74a6-059133b6e2e8",
+              "_uuid": "e805ad52f0514497b67c3726104ba46d361eb92c"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "title_mapping = {\"Mr\": 1, \"Miss\": 2, \"Mrs\": 3, \"Master\": 4, \"Rare\": 5}\nfor dataset in combine:\n    dataset['Title'] = dataset['Title'].map(title_mapping)\n    dataset['Title'] = dataset['Title'].fillna(0)",
+              "startOffset": 0,
+              "endOffset": 203
+            }
+          },
+          "relationshipType": "categorical_to_ordinal",
+          "confidence": 0.99,
+          "reason": "Markdown says convert titles to ordinals; code maps Title strings to integers and fills NA."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-39",
+        "index": 39,
+        "metadata": {
+          "_cell_guid": "f27bb974-a3d7-07a1-f7e4-876f6da87e62",
+          "_uuid": "5fefaa1b37c537dda164c87a757fe705a99815d9"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "Now we can safely drop the Name feature from training and testing datasets. We also do not need the PassengerId feature in the training dataset.",
+            "startOffset": 0,
+            "endOffset": 144
+          },
+          "codeTarget": {
+            "id": "cell-40",
+            "index": 40,
+            "metadata": {
+              "_cell_guid": "9d61dded-5ff0-5018-7580-aecb4ea17506",
+              "_uuid": "1da299cf2ffd399fd5b37d74fb40665d16ba5347"
+            },
+            "scope": "whole_cell",
+            "portion": {
+              "text": "train_df = train_df.drop(['Name', 'PassengerId'], axis=1)\ntest_df = test_df.drop(['Name'], axis=1)\ncombine = [train_df, test_df]\ntrain_df.shape, test_df.shape",
+              "startOffset": 0,
+              "endOffset": 158
+            }
+          },
+          "relationshipType": "feature_dropping",
+          "confidence": 0.99,
+          "reason": "Markdown states dropping Name and PassengerId; code drops those columns from train/test datasets and updates combine."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-41",
+        "index": 41,
+        "metadata": {
+          "_cell_guid": "2c8e84bb-196d-bd4a-4df9-f5213561b5d3",
+          "_uuid": "a1ac66c79b279d94860e66996d3d8dba801a6d9a"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "Let us start by converting Sex feature to a new feature called Gender where female=1 and male=0.",
+            "startOffset": 222,
+            "endOffset": 318
+          },
+          "codeTarget": {
+            "id": "cell-42",
+            "index": 42,
+            "metadata": {
+              "_cell_guid": "c20c1df2-157c-e5a0-3e24-15a828095c96",
+              "_uuid": "840498eaee7baaca228499b0a5652da9d4edaf37"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "for dataset in combine:\n    dataset['Sex'] = dataset['Sex'].map( {'female': 1, 'male': 0} ).astype(int)",
+              "startOffset": 0,
+              "endOffset": 103
+            }
+          },
+          "relationshipType": "categorical_to_numeric",
+          "confidence": 0.99,
+          "reason": "Markdown describes converting Sex to numeric; code maps 'female' to 1 and 'male' to 0."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-43",
+        "index": 43,
+        "metadata": {
+          "_cell_guid": "d72cb29e-5034-1597-b459-83a9640d3d3a",
+          "_uuid": "6da8bfe6c832f4bd2aa1312bdd6b8b4af48a012e"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "We can consider three methods to complete a numerical continuous feature.",
+            "startOffset": 175,
+            "endOffset": 248
+          },
+          "codeTarget": {
+            "id": "cell-48",
+            "index": 48,
+            "metadata": {
+              "_cell_guid": "a4015dfa-a0ab-65bc-0cbe-efecf1eb2569",
+              "_uuid": "31198f0ad0dbbb74290ebe135abffa994b8f58f3"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "# age_mean = guess_df.mean()\n            # age_std = guess_df.std()\n            # age_guess = rnd.uniform(age_mean - age_std, age_mean + age_std)\n\n            age_guess = guess_df.median()",
+              "startOffset": 228,
+              "endOffset": 416
+            }
+          },
+          "relationshipType": "imputation_methods_illustration",
+          "confidence": 0.9,
+          "reason": "Markdown lists three methods including random and group-median; code shows commented random option and uses median method, corresponding to described methods."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-45",
+        "index": 45,
+        "metadata": {
+          "_cell_guid": "a4f166f9-f5f9-1819-66c3-d89dd5b0d8ff",
+          "_uuid": "6b22ac53d95c7979d5f4580bd5fd29d27155c347"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "Let us start by preparing an empty array to contain guessed Age values based on Pclass x Gender combinations.",
+            "startOffset": 0,
+            "endOffset": 109
+          },
+          "codeTarget": {
+            "id": "cell-46",
+            "index": 46,
+            "metadata": {
+              "_cell_guid": "9299523c-dcf1-fb00-e52f-e2fb860a3920",
+              "_uuid": "24a0971daa4cbc3aa700bae42e68c17ce9f3a6e2"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "guess_ages = np.zeros((2,3))\nguess_ages",
+              "startOffset": 0,
+              "endOffset": 39
+            }
+          },
+          "relationshipType": "variable_initialization",
+          "confidence": 0.98,
+          "reason": "Markdown mentions preparing an empty array for guessed ages; code creates guess_ages array of shape (2,3)."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-47",
+        "index": 47,
+        "metadata": {
+          "_cell_guid": "ec9fed37-16b1-5518-4fa8-0a7f579dbc82",
+          "_uuid": "8acd90569767b544f055d573bbbb8f6012853385"
+        }
+      },
+      "relationships": []
+    },
+    {
+      "markdownCell": {
+        "id": "cell-49",
+        "index": 49,
+        "metadata": {
+          "_cell_guid": "dbe0a8bf-40bc-c581-e10e-76f07b3b71d4",
+          "_uuid": "e7c52b44b703f28e4b6f4ddba67ab65f40274550"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "Let us create Age bands and determine correlations with Survived.",
+            "startOffset": 0,
+            "endOffset": 65
+          },
+          "codeTarget": {
+            "id": "cell-50",
+            "index": 50,
+            "metadata": {
+              "_cell_guid": "725d1c84-6323-9d70-5812-baf9994d3aa1",
+              "_uuid": "5c8b4cbb302f439ef0d6278dcfbdafd952675353"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "train_df['AgeBand'] = pd.cut(train_df['Age'], 5)\ntrain_df[['AgeBand', 'Survived']].groupby(['AgeBand'], as_index=False).mean().sort_values(by='AgeBand', ascending=True)",
+              "startOffset": 0,
+              "endOffset": 168
+            }
+          },
+          "relationshipType": "age_banding_and_correlation",
+          "confidence": 0.98,
+          "reason": "Markdown describes creating Age bands and checking correlation; code uses pd.cut to create AgeBand and groups by AgeBand to compute mean Survived."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-51",
+        "index": 51,
+        "metadata": {
+          "_cell_guid": "ba4be3a0-e524-9c57-fbec-c8ecc5cde5c6",
+          "_uuid": "856392dd415ac14ab74a885a37d068fc7a58f3a5"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "Let us replace Age with ordinals based on these bands.",
+            "startOffset": 0,
+            "endOffset": 54
+          },
+          "codeTarget": {
+            "id": "cell-52",
+            "index": 52,
+            "metadata": {
+              "_cell_guid": "797b986d-2c45-a9ee-e5b5-088de817c8b2",
+              "_uuid": "ee13831345f389db407c178f66c19cc8331445b0"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "dataset.loc[ dataset['Age'] <= 16, 'Age'] = 0\n    dataset.loc[(dataset['Age'] > 16) & (dataset['Age'] <= 32), 'Age'] = 1\n    dataset.loc[(dataset['Age'] > 32) & (dataset['Age'] <= 48), 'Age'] = 2\n    dataset.loc[(dataset['Age'] > 48) & (dataset['Age'] <= 64), 'Age'] = 3\n    dataset.loc[ dataset['Age'] > 64, 'Age']",
+              "startOffset": 32,
+              "endOffset": 347
+            }
+          },
+          "relationshipType": "age_to_ordinal",
+          "confidence": 0.98,
+          "reason": "Markdown instructs replacing Age with ordinal codes; code assigns discrete integer bands to Age ranges."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-53",
+        "index": 53,
+        "metadata": {
+          "_cell_guid": "004568b6-dd9a-ff89-43d5-13d4e9370b1d",
+          "_uuid": "8e3fbc95e0fd6600e28347567416d3f0d77a24cc"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "We can not remove the AgeBand feature.",
+            "startOffset": 0,
+            "endOffset": 38
+          },
+          "codeTarget": {
+            "id": "cell-54",
+            "index": 54,
+            "metadata": {
+              "_cell_guid": "875e55d4-51b0-5061-b72c-8a23946133a3",
+              "_uuid": "1ea01ccc4a24e8951556d97c990aa0136da19721"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "train_df = train_df.drop(['AgeBand'], axis=1)",
+              "startOffset": 0,
+              "endOffset": 45
+            }
+          },
+          "relationshipType": "feature_removal",
+          "confidence": 0.9,
+          "reason": "Markdown (likely typo 'can not' meaning 'can now') refers to removing AgeBand; code drops the AgeBand column."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-55",
+        "index": 55,
+        "metadata": {
+          "_cell_guid": "1c237b76-d7ac-098f-0156-480a838a64a9",
+          "_uuid": "e3d4a2040c053fbd0486c8cfc4fec3224bd3ebb3"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "We can create a new feature for FamilySize which combines Parch and SibSp. This will enable us to drop Parch and SibSp from our datasets.",
+            "startOffset": 52,
+            "endOffset": 189
+          },
+          "codeTarget": {
+            "id": "cell-56",
+            "index": 56,
+            "metadata": {
+              "_cell_guid": "7e6c04ed-cfaa-3139-4378-574fd095d6ba",
+              "_uuid": "33d1236ce4a8ab888b9fac2d5af1c78d174b32c7",
+              "jupyter": {
+                "source_hidden": true
+              }
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "dataset['FamilySize'] = dataset['SibSp'] + dataset['Parch'] + 1",
+              "startOffset": 28,
+              "endOffset": 91
+            }
+          },
+          "relationshipType": "feature_creation",
+          "confidence": 0.98,
+          "reason": "Markdown describes creating FamilySize from Parch and SibSp; code implements exactly that."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-57",
+        "index": 57,
+        "metadata": {
+          "_cell_guid": "842188e6-acf8-2476-ccec-9e3451e4fa86",
+          "_uuid": "67f8e4474cd1ecf4261c153ce8b40ea23cf659e4"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "We can create another feature called IsAlone.",
+            "startOffset": 0,
+            "endOffset": 45
+          },
+          "codeTarget": {
+            "id": "cell-58",
+            "index": 58,
+            "metadata": {
+              "_cell_guid": "5c778c69-a9ae-1b6b-44fe-a0898d07be7a",
+              "_uuid": "3b8db81cc3513b088c6bcd9cd1938156fe77992f"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "for dataset in combine:\n    dataset['IsAlone'] = 0\n    dataset.loc[dataset['FamilySize'] == 1, 'IsAlone'] = 1",
+              "startOffset": 0,
+              "endOffset": 109
+            }
+          },
+          "relationshipType": "feature_creation_binary",
+          "confidence": 0.98,
+          "reason": "Markdown suggests new IsAlone feature; code creates IsAlone and sets it to 1 when FamilySize == 1."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-59",
+        "index": 59,
+        "metadata": {
+          "_cell_guid": "e6b87c09-e7b2-f098-5b04-4360080d26bc",
+          "_uuid": "3da4204b2c78faa54a94bbad78a8aa85fbf90c87"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "Let us drop Parch, SibSp, and FamilySize features in favor of IsAlone.",
+            "startOffset": 0,
+            "endOffset": 70
+          },
+          "codeTarget": {
+            "id": "cell-60",
+            "index": 60,
+            "metadata": {
+              "_cell_guid": "74ee56a6-7357-f3bc-b605-6c41f8aa6566",
+              "_uuid": "1e3479690ef7cd8ee10538d4f39d7117246887f0"
+            },
+            "scope": "whole_cell",
+            "portion": {
+              "text": "train_df = train_df.drop(['Parch', 'SibSp', 'FamilySize'], axis=1)\ntest_df = test_df.drop(['Parch', 'SibSp', 'FamilySize'], axis=1)\ncombine = [train_df, test_df]\n\ntrain_df.head()",
+              "startOffset": 0,
+              "endOffset": 178
+            }
+          },
+          "relationshipType": "feature_removal",
+          "confidence": 0.99,
+          "reason": "Markdown describes dropping Parch, SibSp, FamilySize; code drops those columns from train and test."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-61",
+        "index": 61,
+        "metadata": {
+          "_cell_guid": "f890b730-b1fe-919e-fb07-352fbd7edd44",
+          "_uuid": "71b800ed96407eba05220f76a1288366a22ec887"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "We can also create an artificial feature combining Pclass and Age.",
+            "startOffset": 0,
+            "endOffset": 66
+          },
+          "codeTarget": {
+            "id": "cell-62",
+            "index": 62,
+            "metadata": {
+              "_cell_guid": "305402aa-1ea1-c245-c367-056eef8fe453",
+              "_uuid": "aac2c5340c06210a8b0199e15461e9049fbf2cff",
+              "scrolled": true
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "for dataset in combine:\n    dataset['Age*Class'] = dataset.Age * dataset.Pclass",
+              "startOffset": 0,
+              "endOffset": 79
+            }
+          },
+          "relationshipType": "feature_creation_interaction",
+          "confidence": 0.99,
+          "reason": "Markdown proposes Age*Class artificial feature; code computes Age * Pclass and stores in 'Age*Class'."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-63",
+        "index": 63,
+        "metadata": {
+          "_cell_guid": "13292c1b-020d-d9aa-525c-941331bb996a",
+          "_uuid": "8264cc5676db8cd3e0b3e3f078cbaa74fd585a3c"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "Embarked feature takes S, Q, C values based on port of embarkation. Our training dataset has two missing values. We simply fill these with the most common occurance.",
+            "startOffset": 38,
+            "endOffset": 203
+          },
+          "codeTarget": {
+            "id": "cell-64",
+            "index": 64,
+            "metadata": {
+              "_cell_guid": "bf351113-9b7f-ef56-7211-e8dd00665b18",
+              "_uuid": "1e3f8af166f60a1b3125a6b046eff5fff02d63cf"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "freq_port = train_df.Embarked.dropna().mode()[0]",
+              "startOffset": 0,
+              "endOffset": 48
+            }
+          },
+          "relationshipType": "mode_computation",
+          "confidence": 0.98,
+          "reason": "Markdown says fill missing Embarked with most common value; code computes freq_port as mode of Embarked."
+        },
+        {
+          "markdownPortion": {
+            "text": "Embarked feature takes S, Q, C values based on port of embarkation. Our training dataset has two missing values. We simply fill these with the most common occurance.",
+            "startOffset": 38,
+            "endOffset": 203
+          },
+          "codeTarget": {
+            "id": "cell-65",
+            "index": 65,
+            "metadata": {
+              "_cell_guid": "51c21fcc-f066-cd80-18c8-3d140be6cbae",
+              "_uuid": "d85b5575fb45f25749298641f6a0a38803e1ff22"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "for dataset in combine:\n    dataset['Embarked'] = dataset['Embarked'].fillna(freq_port)",
+              "startOffset": 0,
+              "endOffset": 87
+            }
+          },
+          "relationshipType": "embarked_fill_mode",
+          "confidence": 0.98,
+          "reason": "This code fills Embarked missing values with the computed mode, matching the markdown instruction."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-66",
+        "index": 66,
+        "metadata": {
+          "_cell_guid": "f6acf7b2-0db3-e583-de50-7e14b495de34",
+          "_uuid": "d8830e997995145314328b6218b5606df04499b0"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "We can now convert the EmbarkedFill feature by creating a new numeric Port feature.",
+            "startOffset": 47,
+            "endOffset": 130
+          },
+          "codeTarget": {
+            "id": "cell-67",
+            "index": 67,
+            "metadata": {
+              "_cell_guid": "89a91d76-2cc0-9bbb-c5c5-3c9ecae33c66",
+              "_uuid": "e480a1ef145de0b023821134896391d568a6f4f9"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "for dataset in combine:\n    dataset['Embarked'] = dataset['Embarked'].map( {'S': 0, 'C': 1, 'Q': 2} ).astype(int)",
+              "startOffset": 0,
+              "endOffset": 113
+            }
+          },
+          "relationshipType": "categorical_to_numeric",
+          "confidence": 0.99,
+          "reason": "Markdown mentions converting Embarked to numeric; code maps S/C/Q to 0/1/2 and casts to int."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-68",
+        "index": 68,
+        "metadata": {
+          "_cell_guid": "e3dfc817-e1c1-a274-a111-62c1c814cecf",
+          "_uuid": "d79834ebc4ab9d48ed404584711475dbf8611b91"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "We can now complete the Fare feature for single missing value in test dataset using mode to get the value that occurs most frequently for this feature.",
+            "startOffset": 55,
+            "endOffset": 206
+          },
+          "codeTarget": {
+            "id": "cell-69",
+            "index": 69,
+            "metadata": {
+              "_cell_guid": "3600cb86-cf5f-d87b-1b33-638dc8db1564",
+              "_uuid": "aacb62f3526072a84795a178bd59222378bab180"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "test_df['Fare'].fillna(test_df['Fare'].dropna().median(), inplace=True)",
+              "startOffset": 0,
+              "endOffset": 71
+            }
+          },
+          "relationshipType": "fare_imputation",
+          "confidence": 0.95,
+          "reason": "Markdown says fill missing Fare with a central value; code fills test_df Fare null with median of non-null Fare (practical choice)."
+        },
+        {
+          "markdownPortion": {
+            "text": "We may also want round off the fare to two decimals as it represents currency.",
+            "startOffset": 516,
+            "endOffset": 594
+          },
+          "codeTarget": {
+            "id": "cell-69",
+            "index": 69,
+            "metadata": {
+              "_cell_guid": "3600cb86-cf5f-d87b-1b33-638dc8db1564",
+              "_uuid": "aacb62f3526072a84795a178bd59222378bab180"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "test_df.head()",
+              "startOffset": 72,
+              "endOffset": 86
+            }
+          },
+          "relationshipType": "data_check_after_imputation",
+          "confidence": 0.7,
+          "reason": "Markdown mentions rounding; code shows head() to inspect data. There's no explicit rounding in code, so relationship is weaker (inspection after imputation)."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-70",
+        "index": 70,
+        "metadata": {
+          "_cell_guid": "4b816bc7-d1fb-c02b-ed1d-ee34b819497d",
+          "_uuid": "3466d98e83899d8b38a36ede794c68c5656f48e6"
+        }
+      },
+      "relationships": []
+    },
+    {
+      "markdownCell": {
+        "id": "cell-72",
+        "index": 72,
+        "metadata": {
+          "_cell_guid": "d65901a5-3684-6869-e904-5f1a7cce8a6d",
+          "_uuid": "89400fba71af02d09ff07adf399fb36ac4913db6"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "Convert the Fare feature to ordinal values based on the FareBand.",
+            "startOffset": 0,
+            "endOffset": 65
+          },
+          "codeTarget": {
+            "id": "cell-73",
+            "index": 73,
+            "metadata": {
+              "_cell_guid": "385f217a-4e00-76dc-1570-1de4eec0c29c",
+              "_uuid": "640f305061ec4221a45ba250f8d54bb391035a57"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "dataset.loc[ dataset['Fare'] <= 7.91, 'Fare'] = 0\n    dataset.loc[(dataset['Fare'] > 7.91) & (dataset['Fare'] <= 14.454), 'Fare'] = 1\n    dataset.loc[(dataset['Fare'] > 14.454) & (dataset['Fare'] <= 31), 'Fare']   = 2\n    dataset.loc[ dataset['Fare'] > 31, 'Fare'] = 3\n    dataset['Fare'] = dataset['Fare'].astype(int)",
+              "startOffset": 28,
+              "endOffset": 346
+            }
+          },
+          "relationshipType": "fare_to_ordinal",
+          "confidence": 0.99,
+          "reason": "Markdown instructs converting Fare to ordinal based on FareBand; code assigns Fare to discrete integer bins and casts to int."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-74",
+        "index": 74,
+        "metadata": {
+          "_cell_guid": "27272bb9-3c64-4f9a-4a3b-54f02e1c8289",
+          "_uuid": "531994ed95a3002d1759ceb74d9396db706a41e2"
+        }
+      },
+      "relationships": []
+    },
+    {
+      "markdownCell": {
+        "id": "cell-76",
+        "index": 76,
+        "metadata": {
+          "_cell_guid": "69783c08-c8cc-a6ca-2a9a-5e75581c6d31",
+          "_uuid": "a55f20dd6654610ff2d66c1bf3e4c6c73dcef9e5"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "Now we are ready to train a model and predict the required solution.",
+            "startOffset": 29,
+            "endOffset": 97
+          },
+          "codeTarget": {
+            "id": "cell-77",
+            "index": 77,
+            "metadata": {
+              "_cell_guid": "0acf54f9-6cf5-24b5-72d9-29b30052823a",
+              "_uuid": "04d2235855f40cffd81f76b977a500fceaae87ad"
+            },
+            "scope": "whole_cell",
+            "portion": {
+              "text": "X_train = train_df.drop(\"Survived\", axis=1)\nY_train = train_df[\"Survived\"]\nX_test  = test_df.drop(\"PassengerId\", axis=1).copy()\nX_train.shape, Y_train.shape, X_test.shape",
+              "startOffset": 0,
+              "endOffset": 170
+            }
+          },
+          "relationshipType": "model_data_preparation",
+          "confidence": 0.99,
+          "reason": "Markdown states readiness to train; code prepares X_train, Y_train, and X_test which are necessary inputs for model training."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-78",
+        "index": 78,
+        "metadata": {
+          "_cell_guid": "579bc004-926a-bcfe-e9bb-c8df83356876",
+          "_uuid": "782903c09ec9ee4b6f3e03f7c8b5a62c00461deb"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "Note the confidence score generated by the model based on our training dataset.",
+            "startOffset": 393,
+            "endOffset": 472
+          },
+          "codeTarget": {
+            "id": "cell-79",
+            "index": 79,
+            "metadata": {
+              "_cell_guid": "0edd9322-db0b-9c37-172d-a3a4f8dec229",
+              "_uuid": "a649b9c53f4c7b40694f60f5c8dc14ec5ef519ec"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "acc_log = round(logreg.score(X_train, Y_train) * 100, 2)\nacc_log",
+              "startOffset": 114,
+              "endOffset": 178
+            }
+          },
+          "relationshipType": "model_accuracy_reporting",
+          "confidence": 0.98,
+          "reason": "Markdown mentions model confidence score; code computes acc_log representing the model's training score."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-80",
+        "index": 80,
+        "metadata": {
+          "_cell_guid": "3af439ae-1f04-9236-cdc2-ec8170a0d4ee",
+          "_uuid": "180e27c96c821656a84889f73986c6ddfff51ed3"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "We can use Logistic Regression to validate our assumptions and decisions for feature creating and completing goals. This can be done by calculating the coefficient of the features in the decision function.",
+            "startOffset": 0,
+            "endOffset": 205
+          },
+          "codeTarget": {
+            "id": "cell-81",
+            "index": 81,
+            "metadata": {
+              "_cell_guid": "e545d5aa-4767-7a41-5799-a4c5e529ce72",
+              "_uuid": "6e6f58053fae405fc93d312fc999f3904e708dbe"
+            },
+            "scope": "whole_cell",
+            "portion": {
+              "text": "coeff_df = pd.DataFrame(train_df.columns.delete(0))\ncoeff_df.columns = ['Feature']\ncoeff_df[\"Correlation\"] = pd.Series(logreg.coef_[0])\n\ncoeff_df.sort_values(by='Correlation', ascending=False)",
+              "startOffset": 0,
+              "endOffset": 192
+            }
+          },
+          "relationshipType": "feature_importance_extraction",
+          "confidence": 0.99,
+          "reason": "Markdown explains using logistic coefficients to validate features; code constructs a DataFrame of features and assigns logreg.coef_ values to show correlations."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-82",
+        "index": 82,
+        "metadata": {
+          "_cell_guid": "ac041064-1693-8584-156b-66674117e4d0",
+          "_uuid": "ccba9ac0a9c3c648ef9bc778977ab99066ab3945"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "Note that the model generates a confidence score which is higher than Logistics Regression model.",
+            "startOffset": 520,
+            "endOffset": 617
+          },
+          "codeTarget": {
+            "id": "cell-91",
+            "index": 91,
+            "metadata": {
+              "_cell_guid": "dc98ed72-3aeb-861f-804d-b6e3d178bf4b",
+              "_uuid": "3a016c1f24da59c85648204302d61ea15920e740"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "sgd = SGDClassifier()\nsgd.fit(X_train, Y_train)\nY_pred = sgd.predict(X_test)\nacc_sgd = round(sgd.score(X_train, Y_train) * 100, 2)\nacc_sgd",
+              "startOffset": 31,
+              "endOffset": 169
+            }
+          },
+          "relationshipType": "additional_model_training",
+          "confidence": 0.7,
+          "reason": "Markdown discusses model scores comparatively; code trains SGDClassifier which is another model whose score participates in the later comparison (weaker direct tie but part of model suite)."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-84",
+        "index": 84,
+        "metadata": {
+          "_cell_guid": "172a6286-d495-5ac4-1a9c-5b77b74ca6d2",
+          "_uuid": "bb3ed027c45664148b61e3aa5e2ca8111aac8793"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "KNN confidence score is better than Logistics Regression but worse than SVM.",
+            "startOffset": 511,
+            "endOffset": 587
+          },
+          "codeTarget": {
+            "id": "cell-85",
+            "index": 85,
+            "metadata": {
+              "_cell_guid": "ca14ae53-f05e-eb73-201c-064d7c3ed610",
+              "_uuid": "54d86cd45703d459d452f89572771deaa8877999"
+            },
+            "scope": "whole_cell",
+            "portion": {
+              "text": "knn = KNeighborsClassifier(n_neighbors = 3)\nknn.fit(X_train, Y_train)\nY_pred = knn.predict(X_test)\nacc_knn = round(knn.score(X_train, Y_train) * 100, 2)\nacc_knn",
+              "startOffset": 0,
+              "endOffset": 160
+            }
+          },
+          "relationshipType": "model_training_and_evaluation",
+          "confidence": 0.96,
+          "reason": "Markdown discusses KNN and its score relative to others; code trains KNeighborsClassifier and computes acc_knn."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-86",
+        "index": 86,
+        "metadata": {
+          "_cell_guid": "810f723d-2313-8dfd-e3e2-26673b9caa90",
+          "_uuid": "1535f18113f851e480cd53e0c612dc05835690f3"
+        }
+      },
+      "relationships": []
+    },
+    {
+      "markdownCell": {
+        "id": "cell-88",
+        "index": 88,
+        "metadata": {
+          "_cell_guid": "1e286e19-b714-385a-fcfa-8cf5ec19956a",
+          "_uuid": "df148bf93e11c9ec2c97162d5c0c0605b75d9334"
+        }
+      },
+      "relationships": []
+    },
+    {
+      "markdownCell": {
+        "id": "cell-92",
+        "index": 92,
+        "metadata": {
+          "_cell_guid": "bae7f8d7-9da0-f4fd-bdb1-d97e719a18d7",
+          "_uuid": "1c70e99920ae34adce03aaef38d61e2b83ff6a9c"
+        }
+      },
+      "relationships": []
+    },
+    {
+      "markdownCell": {
+        "id": "cell-94",
+        "index": 94,
+        "metadata": {
+          "_cell_guid": "85693668-0cd5-4319-7768-eddb62d2b7d0",
+          "_uuid": "24f4e46f202a858076be91752170cad52aa9aefa"
+        }
+      },
+      "relationships": []
+    },
+    {
+      "markdownCell": {
+        "id": "cell-96",
+        "index": 96,
+        "metadata": {
+          "_cell_guid": "f6c9eef8-83dd-581c-2d8e-ce932fe3a44d",
+          "_uuid": "2c1428d022430ea594af983a433757e11b47c50c"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "We can now rank our evaluation of all the models to choose the best one for our problem.",
+            "startOffset": 22,
+            "endOffset": 110
+          },
+          "codeTarget": {
+            "id": "cell-97",
+            "index": 97,
+            "metadata": {
+              "_cell_guid": "1f3cebe0-31af-70b2-1ce4-0fd406bcdfc6",
+              "_uuid": "06a52babe50e0dd837b553c78fc73872168e1c7d"
+            },
+            "scope": "whole_cell",
+            "portion": {
+              "text": "models = pd.DataFrame({\n    'Model': ['Support Vector Machines', 'KNN', 'Logistic Regression', \n              'Random Forest', 'Naive Bayes', 'Perceptron', \n              'Stochastic Gradient Decent', 'Linear SVC', \n              'Decision Tree'],\n    'Score': [acc_svc, acc_knn, acc_log, \n              acc_random_forest, acc_gaussian, acc_perceptron, \n              acc_sgd, acc_linear_svc, acc_decision_tree]})\nmodels.sort_values(by='Score', ascending=False)",
+              "startOffset": 0,
+              "endOffset": 461
+            }
+          },
+          "relationshipType": "model_comparison",
+          "confidence": 0.99,
+          "reason": "Markdown mentions ranking model evaluations; code constructs a DataFrame of model names and their computed scores and sorts by Score."
+        },
+        {
+          "markdownPortion": {
+            "text": "We can now rank our evaluation of all the models to choose the best one for our problem.",
+            "startOffset": 22,
+            "endOffset": 110
+          },
+          "codeTarget": {
+            "id": "cell-97",
+            "index": 97,
+            "metadata": {
+              "_cell_guid": "1f3cebe0-31af-70b2-1ce4-0fd406bcdfc6",
+              "_uuid": "06a52babe50e0dd837b553c78fc73872168e1c7d"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "models.sort_values(by='Score', ascending=False)",
+              "startOffset": 414,
+              "endOffset": 461
+            }
+          },
+          "relationshipType": "model_ranking",
+          "confidence": 0.98,
+          "reason": "Markdown instructs ranking models; code sorts the models DataFrame by Score to rank them."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-99",
+        "index": 99,
+        "metadata": {
+          "_cell_guid": "fcfc8d9f-e955-cf70-5843-1fb764c54699",
+          "_uuid": "0523a03b329df58c33ed672e5fb6cd2c9af1cae3"
+        }
+      },
+      "relationships": [
+        {
+          "markdownPortion": {
+            "text": "Our submission to the competition site Kaggle results in scoring 3,883 of 6,082 competition entries.",
+            "startOffset": 0,
+            "endOffset": 100
+          },
+          "codeTarget": {
+            "id": "cell-98",
+            "index": 98,
+            "metadata": {
+              "_cell_guid": "28854d36-051f-3ef0-5535-fa5ba6a9bef7",
+              "_uuid": "82b31ea933b3026bd038a8370d651efdcdb3e4d7"
+            },
+            "scope": "excerpt",
+            "portion": {
+              "text": "# submission.to_csv('../output/submission.csv', index=False)",
+              "startOffset": 109,
+              "endOffset": 169
+            }
+          },
+          "relationshipType": "submission_action",
+          "confidence": 0.85,
+          "reason": "Markdown discusses submission ranking; code prepares submission DataFrame and includes commented out to_csv for writing submission file, linking markdown's submission topic to code."
+        }
+      ]
+    },
+    {
+      "markdownCell": {
+        "id": "cell-100",
+        "index": 100,
+        "metadata": {
+          "_cell_guid": "aeec9210-f9d8-cd7c-c4cf-a87376d5f693",
+          "_uuid": "cdae56d6adbfb15ff9c491c645ae46e2c91d75ce"
+        }
+      },
+      "relationships": []
+    }
+  ]
+}

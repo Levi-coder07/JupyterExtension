@@ -1,0 +1,11 @@
+{
+  "run": "user_run_04",
+  "model": "gpt-5-nano",
+  "predictions": 14,
+  "truePositives": 8,
+  "falsePositives": 6,
+  "falseNegatives": 28,
+  "precision": 0.5714285714285714,
+  "recall": 0.2222222222222222,
+  "f1": 0.32
+}

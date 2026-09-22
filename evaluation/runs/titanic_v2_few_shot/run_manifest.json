@@ -1,0 +1,32 @@
+[
+  {
+    "run": 1,
+    "elapsedSeconds": 18.694,
+    "relationshipCount": 2,
+    "resultFile": "/Users/evli/FGV-Master1/my_first_extension/evaluation/runs/titanic_v2_few_shot/run_1.linkmaker.json"
+  },
+  {
+    "run": 2,
+    "elapsedSeconds": 122.926,
+    "relationshipCount": 32,
+    "resultFile": "/Users/evli/FGV-Master1/my_first_extension/evaluation/runs/titanic_v2_few_shot/run_2.linkmaker.json"
+  },
+  {
+    "run": 3,
+    "elapsedSeconds": 5.16,
+    "relationshipCount": 0,
+    "resultFile": "/Users/evli/FGV-Master1/my_first_extension/evaluation/runs/titanic_v2_few_shot/run_3.linkmaker.json"
+  },
+  {
+    "run": 4,
+    "elapsedSeconds": 3.912,
+    "relationshipCount": 0,
+    "resultFile": "/Users/evli/FGV-Master1/my_first_extension/evaluation/runs/titanic_v2_few_shot/run_4.linkmaker.json"
+  },
+  {
+    "run": 5,
+    "elapsedSeconds": 17.548,
+    "relationshipCount": 2,
+    "resultFile": "/Users/evli/FGV-Master1/my_first_extension/evaluation/runs/titanic_v2_few_shot/run_5.linkmaker.json"
+  }
+]

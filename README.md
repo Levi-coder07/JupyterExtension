@@ -11,6 +11,41 @@ for the frontend extension.
 ## Requirements
 
 - JupyterLab >= 4.0.0
+- An `OPENAI_API_KEY` environment variable on the Jupyter server for notebook
+  relationship analysis.
+
+## Markdown-to-output relationship analysis
+
+Use **Analyze Markdown ↔ outputs** in the Notebook Inspector to analyze
+references to rendered charts and HTML tables separately from Markdown-to-code
+relationships. Chart outputs are captured from rendered SVG, canvas, or image
+elements; tables are captured as HTML and text. Results are stored alongside the
+existing code relationships in the same `.linkmaker.json` file under
+`markdownOutputAnalyses`, without replacing `markdownAnalyses`. Set
+`LINKMAKER_OPENAI_OUTPUT_MODEL` to select the output-analysis model; it defaults
+to `LINKMAKER_OPENAI_MODEL`.
+
+## Markdown-to-code relationship analysis
+
+Use the **Analyze notebook relationships** button in the Notebook Inspector to
+send all Markdown and code cells to the configured LLM in one notebook-wide
+request.
+It writes a checkpointed relationship map beside the notebook as
+`<notebook-name>.linkmaker.json`. The map contains exact Markdown and code
+source portions, cell IDs, cell indices, metadata, confidence, and the model's
+short explanation. Set `LINKMAKER_OPENAI_MODEL` on the Jupyter server to select
+a different OpenAI model; the prototype defaults to `gpt-5-mini`. Returned
+cell IDs and verbatim spans are validated against the submitted notebook before
+relationships are saved.
+
+## Two-column notebook layout
+
+Each notebook header has a **Two-column layout** button. It changes the active
+notebook itself: Markdown cells appear on the left and code cells with their
+outputs appear on the right. Select **Default layout** to restore JupyterLab's
+normal single-column notebook view. Click a colored Markdown portion to show
+only its linked code cells and align the first linked cell with that portion's
+rendered line.
 
 ## Install
 

@@ -103,14 +103,48 @@
   margin-top: 10px;
 }
 
-.jp-LinkMaker-saveButton {
-  background: var(--jp-brand-color1);
-  border: 1px solid var(--jp-brand-color1);
+.jp-LinkMaker-buttonRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.jp-LinkMaker-saveButton,
+.jp-LinkMaker-secondaryButton {
   border-radius: 6px;
-  color: var(--jp-ui-inverse-font-color1);
   cursor: pointer;
   font: inherit;
   padding: 6px 10px;
+}
+
+.jp-LinkMaker-outputSelectorLabel {
+  color: var(--jp-ui-font-color2);
+  display: flex;
+  flex-direction: column;
+  font-size: var(--jp-ui-font-size0);
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.jp-LinkMaker-outputSelector {
+  background: var(--jp-layout-color1);
+  border: 1px solid var(--jp-border-color2);
+  border-radius: 4px;
+  color: var(--jp-ui-font-color1);
+  font: inherit;
+  padding: 5px 7px;
+}
+
+.jp-LinkMaker-saveButton {
+  background: var(--jp-brand-color1);
+  border: 1px solid var(--jp-brand-color1);
+  color: var(--jp-ui-inverse-font-color1);
+}
+
+.jp-LinkMaker-secondaryButton {
+  background: var(--jp-layout-color2);
+  border: 1px solid var(--jp-border-color2);
+  color: var(--jp-ui-font-color1);
 }
 
 .jp-LinkMaker-saveButton:disabled {
@@ -152,4 +186,225 @@
   color: var(--jp-ui-font-color2);
   line-height: 1.5;
   padding: 12px;
+}
+
+.jp-Notebook .jp-Cell.jp-LinkMaker-codeRelated {
+  background-color: rgb(33 150 243 / 18%) !important;
+  border-left: 5px solid #2196f3 !important;
+  box-shadow: inset 0 0 0 2px rgb(33 150 243 / 65%) !important;
+}
+
+.jp-Notebook .jp-OutputArea-child.jp-LinkMaker-outputRelated {
+  box-shadow:
+    inset 0 0 0 3px var(--jp-linkmaker-output-color),
+    0 0 10px
+      color-mix(in srgb, var(--jp-linkmaker-output-color) 35%, transparent);
+  position: relative;
+}
+
+.jp-Notebook .jp-OutputArea-child.jp-LinkMaker-outputRelated::before {
+  background: var(--jp-linkmaker-output-color);
+  border-radius: 999px;
+  color: #fff;
+  content: 'Linked output';
+  font-size: var(--jp-ui-font-size0);
+  left: 6px;
+  padding: 2px 6px;
+  position: absolute;
+  top: 6px;
+  z-index: 1;
+}
+
+.jp-Notebook
+  .jp-OutputArea-child.jp-LinkMaker-outputRelated.jp-LinkMaker-pinnedOutput::before {
+  content: 'Pinned output';
+}
+
+.jp-Notebook .jp-Cell.jp-LinkMaker-pinnedMarkdownLink {
+  cursor: default;
+}
+
+.jp-Notebook .jp-Cell.jp-LinkMaker-outputHostFocused .jp-InputArea,
+.jp-Notebook
+  .jp-Cell.jp-LinkMaker-outputHostFocused
+  .jp-OutputArea-child:not(.jp-LinkMaker-hoverLinkedOutput) {
+  filter: blur(1px) saturate(0.35);
+  opacity: 0.34;
+}
+
+.jp-Notebook .jp-OutputArea-child.jp-LinkMaker-hoverLinkedOutput {
+  background: var(--jp-layout-color1);
+  box-shadow:
+    inset 0 0 0 3px var(--jp-linkmaker-active-color),
+    0 0 12px
+      color-mix(in srgb, var(--jp-linkmaker-active-color) 42%, transparent);
+  position: relative;
+  transform: translateY(var(--jp-linkmaker-output-translate-y));
+  transition: transform 160ms ease-out;
+  z-index: 2;
+}
+
+.jp-Notebook .jp-LinkMaker-outputBoundingBox {
+  background: color-mix(
+    in srgb,
+    var(--jp-linkmaker-bounding-color) 18%,
+    transparent
+  );
+  border: 3px solid var(--jp-linkmaker-bounding-color);
+  border-radius: 4px;
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--jp-linkmaker-bounding-color) 22%, transparent);
+  box-sizing: border-box;
+  display: none;
+  pointer-events: none;
+  position: absolute;
+  z-index: 6;
+}
+
+.jp-Notebook
+  .jp-LinkMaker-outputBoundingBox.jp-LinkMaker-outputBoundingBoxActive {
+  display: block;
+}
+
+.jp-Notebook .jp-LinkMaker-codeRelated::before {
+  background: var(--jp-layout-color1);
+  border-radius: 4px;
+  color: var(--jp-ui-font-color2);
+  content: attr(data-linkmaker-relationship-count);
+  display: block;
+  font-size: var(--jp-ui-font-size0);
+  margin-bottom: 6px;
+  padding: 2px 6px;
+}
+
+.jp-LinkMaker-twoColumnToggle {
+  background: var(--jp-layout-color1);
+  border: 1px solid var(--jp-border-color2);
+  border-radius: 4px;
+  color: var(--jp-ui-font-color1);
+  cursor: pointer;
+  font: inherit;
+  padding: 4px 8px;
+}
+
+.jp-LinkMaker-twoColumnToggle[aria-pressed='true'] {
+  background: var(--jp-brand-color1);
+  border-color: var(--jp-brand-color1);
+  color: var(--jp-ui-inverse-font-color1);
+}
+
+.jp-LinkMaker-twoColumnNotebook .jp-WindowedPanel-viewport {
+  display: block;
+  position: relative;
+}
+
+.jp-LinkMaker-twoColumnColumn {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.jp-LinkMaker-codeColumn {
+  position: absolute;
+  top: 0;
+  transition: top 120ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jp-LinkMaker-codeColumn {
+    transition: none;
+  }
+
+  .jp-Notebook .jp-OutputArea-child.jp-LinkMaker-hoverLinkedOutput {
+    transition: none;
+  }
+}
+
+.jp-Notebook .jp-Cell.jp-LinkMaker-hoverLinkedCode {
+  background-color: color-mix(
+    in srgb,
+    var(--jp-linkmaker-active-color) 16%,
+    transparent
+  ) !important;
+  box-shadow:
+    inset 0 0 0 3px var(--jp-linkmaker-active-color),
+    0 0 12px
+      color-mix(in srgb, var(--jp-linkmaker-active-color) 42%, transparent);
+  order: 0;
+}
+
+.jp-LinkMaker-focusDimmed {
+  filter: blur(1px) saturate(0.35);
+  opacity: 0.34;
+  transition:
+    filter 160ms ease,
+    opacity 160ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jp-LinkMaker-focusDimmed {
+    transition: none;
+  }
+}
+
+.jp-LinkMaker-unrelatedToggle {
+  background: var(--jp-layout-color2);
+  border: 1px solid var(--jp-border-color2);
+  border-radius: 4px;
+  color: var(--jp-ui-font-color1);
+  cursor: pointer;
+  font: inherit;
+  margin: 6px var(--jp-cell-padding);
+  order: 1;
+  padding: 7px 10px;
+  text-align: left;
+}
+
+.jp-LinkMaker-unrelatedCodeHidden {
+  display: none !important;
+}
+
+.jp-LinkMaker-codeColumn
+  > .jp-Notebook-cell:not(.jp-LinkMaker-hoverLinkedCode) {
+  order: 2;
+}
+
+.jp-LinkMaker-codeCollapsed {
+  background: var(--jp-layout-color2) !important;
+  border-bottom: 1px solid var(--jp-border-color2) !important;
+  cursor: pointer;
+  max-height: 30px;
+  min-height: 30px;
+  overflow: hidden !important;
+  order: 1;
+  padding: 0 !important;
+}
+
+.jp-LinkMaker-codeCollapsed::before {
+  color: var(--jp-ui-font-color2);
+  content: attr(data-linkmaker-accordion-label) ' — click to expand';
+  display: block;
+  font-size: var(--jp-ui-font-size0);
+  line-height: 30px;
+  padding: 0 8px;
+}
+
+.jp-LinkMaker-codeCollapsed > * {
+  display: none !important;
+}
+
+.cm-content .jp-LinkMaker-codePortionHighlight {
+  background-color: var(--jp-linkmaker-code-highlight-color) !important;
+}
+
+::highlight(linkmaker-markdown) {
+  background-color: rgb(76 175 80 / 55%);
+  color: var(--jp-ui-font-color0);
+}
+
+::highlight(linkmaker-code) {
+  background-color: rgb(33 150 243 / 55%);
+  color: var(--jp-ui-font-color0);
 }

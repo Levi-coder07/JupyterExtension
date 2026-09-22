@@ -1,12 +1,26 @@
 import { CodeCell } from '@jupyterlab/cells';
-import { INotebookModel, INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
+import {
+  INotebookModel,
+  INotebookTracker,
+  NotebookPanel
+} from '@jupyterlab/notebook';
 
 import { Notification } from '@jupyterlab/apputils';
 import { Contents } from '@jupyterlab/services';
 
 import { Widget } from '@lumino/widgets';
 
-import { saveMediaToNotebookDirectory } from './api';
+import {
+  analyzeNotebookOutputRelationships,
+  analyzeNotebookRelationships,
+  saveMediaToNotebookDirectory
+} from './api';
+import { captureNotebookOutputArtifacts } from './outputCapture';
+import {
+  applyRelationshipHighlights,
+  loadRelationshipFile
+} from './relationshipVisualizer';
+import { LINKMAKER_LAYOUT_CHANGED_EVENT } from './TwoColumnNotebookLayout';
 
 interface NotebookSnapshot {
   cellCount: number;
@@ -46,10 +60,7 @@ interface MediaSnapshot {
  * Side panel that shows the active notebook metadata, cells, and outputs.
  */
 export class NotebookInspectorWidget extends Widget {
-  constructor(
-    tracker: INotebookTracker,
-    contentsManager: Contents.IManager
-  ) {
+  constructor(tracker: INotebookTracker, contentsManager: Contents.IManager) {
     super();
 
     this._tracker = tracker;
@@ -66,6 +77,7 @@ export class NotebookInspectorWidget extends Widget {
 
     this._tracker.currentChanged.connect(this._onCurrentChanged, this);
     this._bindNotebook(this._tracker.currentWidget);
+    void this._refreshRelationshipHighlights();
     this._render();
   }
 
@@ -78,6 +90,9 @@ export class NotebookInspectorWidget extends Widget {
     }
 
     this._tracker.currentChanged.disconnect(this._onCurrentChanged, this);
+    if (this._highlightRefreshTimer !== null) {
+      window.clearTimeout(this._highlightRefreshTimer);
+    }
     this._unbindNotebook();
     super.dispose();
   }
@@ -89,6 +104,9 @@ export class NotebookInspectorWidget extends Widget {
 
     this._unbindNotebook();
     this._panel = panel;
+    this._analysisStatus = '';
+    this._outputAnalysisStatus = '';
+    this._selectedOutputId = null;
 
     if (!panel) {
       this._model = null;
@@ -98,6 +116,10 @@ export class NotebookInspectorWidget extends Widget {
     this._model = panel.model;
     panel.context.pathChanged.connect(this._onNotebookUpdated, this);
     panel.disposed.connect(this._onNotebookDisposed, this);
+    panel.content.node.addEventListener(
+      LINKMAKER_LAYOUT_CHANGED_EVENT,
+      this._onNotebookLayoutChanged
+    );
 
     if (this._model) {
       this._model.contentChanged.connect(this._onNotebookUpdated, this);
@@ -109,6 +131,10 @@ export class NotebookInspectorWidget extends Widget {
     if (this._panel) {
       this._panel.context.pathChanged.disconnect(this._onNotebookUpdated, this);
       this._panel.disposed.disconnect(this._onNotebookDisposed, this);
+      this._panel.content.node.removeEventListener(
+        LINKMAKER_LAYOUT_CHANGED_EVENT,
+        this._onNotebookLayoutChanged
+      );
     }
 
     if (this._model) {
@@ -131,7 +157,263 @@ export class NotebookInspectorWidget extends Widget {
   }
 
   private _onNotebookUpdated(): void {
+    if (this._isApplyingHighlights) {
+      this._highlightRefreshPending = true;
+    } else {
+      this._scheduleRelationshipHighlightRefresh();
+    }
     this._render();
+  }
+
+  private _onNotebookLayoutChanged = (): void => {
+    this._scheduleRelationshipHighlightRefresh();
+  };
+
+  /**
+   * Create the notebook-wide Markdown-to-code relationship file on request.
+   */
+  private async _analyzeNotebook(panel: NotebookPanel): Promise<void> {
+    if (this._isAnalyzing || !panel.model) {
+      return;
+    }
+
+    this._isAnalyzing = true;
+    this._analysisStatus = 'Analyzing Markdown-to-code relationships…';
+    this._render();
+
+    try {
+      const response = await analyzeNotebookRelationships(
+        panel.context.path,
+        panel.model.toJSON()
+      );
+      this._analysisStatus =
+        response.status === 'success'
+          ? `Relationship file saved to ${response.path}`
+          : `Relationship file partially saved to ${response.path} (${response.failedMarkdownCells} Markdown cells failed).`;
+
+      await this._refreshRelationshipHighlights();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Unknown analysis error';
+      this._analysisStatus = `Relationship analysis could not run: ${message}`;
+    } finally {
+      this._isAnalyzing = false;
+    }
+
+    if (this._panel === panel) {
+      this._render();
+    }
+  }
+
+  /**
+   * Start analysis for the notebook currently shown in the inspector.
+   */
+  private _onAnalyzeRequested(): void {
+    if (this._panel) {
+      void this._analyzeNotebook(this._panel);
+    }
+  }
+
+  /** Analyze Markdown references to rendered charts and tables separately. */
+  private async _analyzeNotebookOutputs(panel: NotebookPanel): Promise<void> {
+    if (this._isAnalyzingOutputs || !panel.model) {
+      return;
+    }
+
+    const capturedArtifacts = captureNotebookOutputArtifacts(panel);
+    const outputArtifacts = this._selectedOutputId
+      ? capturedArtifacts.filter(
+          artifact => artifact.outputId === this._selectedOutputId
+        )
+      : capturedArtifacts.slice(0, 1);
+    if (outputArtifacts.length === 0) {
+      this._outputAnalysisStatus =
+        'No supported chart or table outputs are currently rendered.';
+      this._render();
+      return;
+    }
+
+    this._isAnalyzingOutputs = true;
+    this._outputAnalysisStatus = `Analyzing Markdown-to-output links for ${outputArtifacts.length} captured outputs…`;
+    this._render();
+
+    try {
+      const response = await analyzeNotebookOutputRelationships(
+        panel.context.path,
+        panel.model.toJSON(),
+        outputArtifacts
+      );
+      this._outputAnalysisStatus =
+        response.status === 'success'
+          ? `Output relationship file saved to ${response.path}`
+          : `Output relationship analysis partially saved to ${response.path} (${response.failedMarkdownCells} Markdown cells failed).`;
+      await this._refreshRelationshipHighlights();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Unknown output analysis error';
+      this._outputAnalysisStatus = `Output relationship analysis could not run: ${message}`;
+    } finally {
+      this._isAnalyzingOutputs = false;
+    }
+
+    if (this._panel === panel) {
+      this._render();
+    }
+  }
+
+  private _onAnalyzeOutputsRequested(): void {
+    if (this._panel) {
+      void this._analyzeNotebookOutputs(this._panel);
+    }
+  }
+
+  private _onApplyHighlightsRequested(): void {
+    if (this._panel) {
+      void this._applySavedHighlights();
+    }
+  }
+
+  private async _applySavedHighlights(): Promise<void> {
+    const panel = this._panel;
+    if (!panel) {
+      return;
+    }
+    const highlightedCells = await this._loadAndApplyHighlights(panel);
+
+    if (highlightedCells > 0) {
+      this._analysisStatus = `Highlighted ${highlightedCells} related notebook cells.`;
+    } else {
+      this._analysisStatus =
+        'No relationships were found in the saved JSON file.';
+    }
+
+    this._render();
+  }
+
+  private async _refreshRelationshipHighlights(): Promise<void> {
+    const panel = this._panel;
+    if (!panel) {
+      return;
+    }
+    await this._loadAndApplyHighlights(panel);
+  }
+
+  private _scheduleRelationshipHighlightRefresh(): void {
+    if (this._highlightRefreshTimer !== null) {
+      window.clearTimeout(this._highlightRefreshTimer);
+    }
+    this._highlightRefreshTimer = window.setTimeout(() => {
+      this._highlightRefreshTimer = null;
+      void this._refreshRelationshipHighlights();
+    }, 100);
+  }
+
+  private async _loadAndApplyHighlights(panel: NotebookPanel): Promise<number> {
+    if (this._isApplyingHighlights) {
+      this._highlightRefreshPending = true;
+      return 0;
+    }
+
+    this._isApplyingHighlights = true;
+    try {
+      const relationshipFile = await loadRelationshipFile(
+        this._contentsManager,
+        panel.context.path
+      );
+      if (panel.isDisposed || this._panel !== panel) {
+        return 0;
+      }
+      return await applyRelationshipHighlights(panel, relationshipFile);
+    } finally {
+      this._isApplyingHighlights = false;
+      if (this._highlightRefreshPending) {
+        this._highlightRefreshPending = false;
+        this._scheduleRelationshipHighlightRefresh();
+      }
+    }
+  }
+
+  private _createAnalysisSection(): HTMLElement {
+    const section = document.createElement('section');
+    section.className = 'jp-LinkMaker-section';
+
+    const heading = document.createElement('h3');
+    heading.className = 'jp-LinkMaker-sectionTitle';
+    heading.textContent = 'Markdown-to-Code Relationships';
+    section.appendChild(heading);
+
+    const buttonRow = document.createElement('div');
+    buttonRow.className = 'jp-LinkMaker-buttonRow';
+
+    const applyButton = document.createElement('button');
+    applyButton.className = 'jp-LinkMaker-secondaryButton';
+    applyButton.textContent = 'Apply saved highlights';
+    applyButton.onclick = () => this._onApplyHighlightsRequested();
+    buttonRow.appendChild(applyButton);
+
+    const rebuildButton = document.createElement('button');
+    rebuildButton.className = 'jp-LinkMaker-saveButton';
+    rebuildButton.disabled = this._isAnalyzing;
+    rebuildButton.textContent = this._isAnalyzing
+      ? 'Analyzing notebook…'
+      : 'Rebuild from model';
+    rebuildButton.onclick = () => this._onAnalyzeRequested();
+    buttonRow.appendChild(rebuildButton);
+
+    const outputButton = document.createElement('button');
+    outputButton.className = 'jp-LinkMaker-secondaryButton';
+    outputButton.disabled = this._isAnalyzingOutputs;
+    outputButton.textContent = this._isAnalyzingOutputs
+      ? 'Analyzing outputs…'
+      : 'Analyze Markdown ↔ outputs';
+    outputButton.onclick = () => this._onAnalyzeOutputsRequested();
+    buttonRow.appendChild(outputButton);
+
+    section.appendChild(buttonRow);
+
+    const panel = this._panel;
+    if (panel) {
+      const outputArtifacts = captureNotebookOutputArtifacts(panel);
+      if (outputArtifacts.length > 0) {
+        const selectorLabel = document.createElement('label');
+        selectorLabel.className = 'jp-LinkMaker-outputSelectorLabel';
+        selectorLabel.textContent = 'Output to analyze';
+        const selector = document.createElement('select');
+        selector.className = 'jp-LinkMaker-outputSelector';
+        selector.disabled = this._isAnalyzingOutputs;
+        outputArtifacts.forEach((artifact, index) => {
+          const option = document.createElement('option');
+          option.value = artifact.outputId;
+          option.textContent = `Cell ${artifact.cellIndex + 1}, output ${artifact.outputIndex + 1} — ${artifact.kind}`;
+          if (
+            artifact.outputId ===
+            (this._selectedOutputId ?? outputArtifacts[0].outputId)
+          ) {
+            option.selected = true;
+          }
+          selector.appendChild(option);
+          if (index === 0 && this._selectedOutputId === null) {
+            this._selectedOutputId = artifact.outputId;
+          }
+        });
+        selector.onchange = () => {
+          this._selectedOutputId = selector.value;
+        };
+        selectorLabel.appendChild(selector);
+        section.appendChild(selectorLabel);
+      }
+    }
+
+    if (this._analysisStatus) {
+      section.appendChild(this._createMessage(this._analysisStatus));
+    }
+    if (this._outputAnalysisStatus) {
+      section.appendChild(this._createMessage(this._outputAnalysisStatus));
+    }
+
+    return section;
   }
 
   private _render(): void {
@@ -157,6 +439,7 @@ export class NotebookInspectorWidget extends Widget {
         this._panel
       );
       body.appendChild(this._createHeader(snapshot));
+      body.appendChild(this._createAnalysisSection());
       body.appendChild(
         this._createJsonSection(
           'Notebook Metadata',
@@ -222,7 +505,8 @@ export class NotebookInspectorWidget extends Widget {
     const rawOutputs = Array.isArray(cell?.outputs) ? cell.outputs : [];
 
     return {
-      cellType: typeof cell?.cell_type === 'string' ? cell.cell_type : 'unknown',
+      cellType:
+        typeof cell?.cell_type === 'string' ? cell.cell_type : 'unknown',
       executionCount:
         typeof cell?.execution_count === 'number' ? cell.execution_count : null,
       metadata: this._asRecord(cell?.metadata),
@@ -256,7 +540,10 @@ export class NotebookInspectorWidget extends Widget {
         panel.content.renderCellOutputs(index);
         return this._captureOutputAreaMedia(widget.outputArea.node);
       } catch (error) {
-        console.warn(`Unable to capture rendered output for cell ${index + 1}.`, error);
+        console.warn(
+          `Unable to capture rendered output for cell ${index + 1}.`,
+          error
+        );
         return [];
       }
     });
@@ -334,14 +621,18 @@ export class NotebookInspectorWidget extends Widget {
     return null;
   }
 
-  private _extractMedia(output: Record<string, unknown> | null): MediaSnapshot[] {
+  private _extractMedia(
+    output: Record<string, unknown> | null
+  ): MediaSnapshot[] {
     const data = this._asRecord(output?.data);
     if (!data) {
       return [];
     }
 
     return Object.entries(data)
-      .map(([mimeType, value]) => this._createMimeMediaSnapshot(mimeType, value))
+      .map(([mimeType, value]) =>
+        this._createMimeMediaSnapshot(mimeType, value)
+      )
       .filter((value): value is MediaSnapshot => value !== null);
   }
 
@@ -420,7 +711,10 @@ export class NotebookInspectorWidget extends Widget {
     return 'Unknown rendering error';
   }
 
-  private _createImagePreviewUri(mimeType: string, rawData: string): string | null {
+  private _createImagePreviewUri(
+    mimeType: string,
+    rawData: string
+  ): string | null {
     if (mimeType === 'image/svg+xml') {
       return this._createSvgPreviewUri(rawData);
     }
@@ -446,9 +740,7 @@ export class NotebookInspectorWidget extends Widget {
     return match?.[1] ?? 'image/*';
   }
 
-  private _extractOutputText(
-    output: Record<string, unknown> | null
-  ): string {
+  private _extractOutputText(output: Record<string, unknown> | null): string {
     if (!output) {
       return '';
     }
@@ -514,7 +806,9 @@ export class NotebookInspectorWidget extends Widget {
 
     const summary = document.createElement('div');
     summary.className = 'jp-LinkMaker-summary';
-    summary.appendChild(this._createSummaryItem('Cells', String(snapshot.cellCount)));
+    summary.appendChild(
+      this._createSummaryItem('Cells', String(snapshot.cellCount))
+    );
     summary.appendChild(
       this._createSummaryItem('Code', String(snapshot.codeCellCount))
     );
@@ -812,7 +1106,9 @@ export class NotebookInspectorWidget extends Widget {
   }
 
   private _isStringArray(value: unknown): value is string[] {
-    return Array.isArray(value) && value.every(item => typeof item === 'string');
+    return (
+      Array.isArray(value) && value.every(item => typeof item === 'string')
+    );
   }
 
   private _asRecord(value: unknown): Record<string, unknown> | null {
@@ -832,4 +1128,12 @@ export class NotebookInspectorWidget extends Widget {
   private _contentsManager: Contents.IManager;
   private _panel: NotebookPanel | null = null;
   private _model: INotebookModel | null = null;
+  private _isAnalyzing = false;
+  private _isAnalyzingOutputs = false;
+  private _isApplyingHighlights = false;
+  private _highlightRefreshPending = false;
+  private _highlightRefreshTimer: number | null = null;
+  private _analysisStatus = '';
+  private _outputAnalysisStatus = '';
+  private _selectedOutputId: string | null = null;
 }

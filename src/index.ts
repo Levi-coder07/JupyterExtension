@@ -7,9 +7,15 @@ import { ICommandPalette } from '@jupyterlab/apputils';
 import { INotebookTracker } from '@jupyterlab/notebook';
 
 import { NotebookInspectorWidget } from './NotebookInspectorWidget';
+import {
+  addTwoColumnLayoutControl,
+  toggleTwoColumnLayout,
+  TwoColumnNotebookLayoutExtension
+} from './TwoColumnNotebookLayout';
 
 const PLUGIN_ID = 'LinkMaker:plugin';
 const OPEN_INSPECTOR_COMMAND = 'LinkMaker:open-notebook-inspector';
+const TOGGLE_TWO_COLUMN_LAYOUT_COMMAND = 'LinkMaker:toggle-two-column-layout';
 
 /**
  * Initialization data for the LinkMaker notebook inspector extension.
@@ -26,6 +32,16 @@ const plugin: JupyterFrontEndPlugin<void> = {
     palette: ICommandPalette | null
   ) => {
     let inspector: NotebookInspectorWidget | null = null;
+    app.docRegistry.addWidgetExtension(
+      'Notebook',
+      new TwoColumnNotebookLayoutExtension()
+    );
+    tracker.forEach(panel => {
+      addTwoColumnLayoutControl(panel);
+    });
+    tracker.widgetAdded.connect((_, panel) => {
+      addTwoColumnLayoutControl(panel);
+    });
 
     /**
      * Create the notebook inspector if it does not exist, then return it.
@@ -44,16 +60,35 @@ const plugin: JupyterFrontEndPlugin<void> = {
 
     app.commands.addCommand(OPEN_INSPECTOR_COMMAND, {
       label: 'Open Notebook Inspector',
-      caption: 'Show notebook metadata, cells, and outputs for the active notebook',
+      caption:
+        'Show notebook metadata, cells, and outputs for the active notebook',
       execute: () => {
         const widget = ensureInspector();
         app.shell.activateById(widget.id);
       }
     });
 
+    app.commands.addCommand(TOGGLE_TWO_COLUMN_LAYOUT_COMMAND, {
+      label: 'Toggle Two-Column Notebook Layout',
+      caption: 'Show Markdown on the left and code with outputs on the right',
+      execute: () => {
+        const panel = tracker.currentWidget;
+        if (!panel) {
+          return;
+        }
+        addTwoColumnLayoutControl(panel);
+        toggleTwoColumnLayout(panel);
+      },
+      isEnabled: () => tracker.currentWidget !== null
+    });
+
     if (palette) {
       palette.addItem({
         command: OPEN_INSPECTOR_COMMAND,
+        category: 'LinkMaker'
+      });
+      palette.addItem({
+        command: TOGGLE_TWO_COLUMN_LAYOUT_COMMAND,
         category: 'LinkMaker'
       });
     }

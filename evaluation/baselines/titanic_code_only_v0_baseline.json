@@ -1,0 +1,660 @@
+{
+  "version": 1,
+  "format": "linkmaker-code-only-baseline",
+  "promptVersion": "v0-legacy",
+  "promptConfiguration": "unknown - not recorded in supplied legacy file",
+  "sourceNotebook": "/Users/evli/Documents/Supplementary Material_v1 2 copy/4-Notebook/titanic.ipynb",
+  "sourceRelationshipFile": "/Users/evli/Documents/Supplementary Material_v1 2 copy/5-Relationship of Notebook/titanic_relationship.json",
+  "selectionRule": "Retain labels whose code_output_id starts with code_. Exclude every output target and every sketch target.",
+  "originalRelationshipCount": 104,
+  "retainedCodeOnlyPredictionCount": 38,
+  "excludedOutputOrSketchPredictionCount": 66,
+  "predictions": [
+    {
+      "markdownCellId": "cell-3",
+      "markdownCellIndex": 3,
+      "markdownText": "## Acquire data\n\nThe Python Pandas packages helps us work with our datasets. We start by acquiring the training and testing datasets into Pandas DataFrames. We also combine these datasets to run certain operations on both datasets together.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-4",
+      "codeCellIndex": 4,
+      "codeText": "train_df = pd.read_csv('../input/train.csv')\ntest_df = pd.read_csv('../input/test.csv')\ncombine = [train_df, test_df]",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_3",
+        "code_output_id": "code_2",
+        "text": "ALL--TEXT",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-5",
+      "markdownCellIndex": 5,
+      "markdownText": "Noting the feature names for directly manipulating or analyzing these.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-6",
+      "codeCellIndex": 6,
+      "codeText": "print(train_df.columns.values)",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_4",
+        "code_output_id": "code_3",
+        "text": "Noting the feature names for directly manipulating or analyzing these.",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-25",
+      "markdownCellIndex": 25,
+      "markdownText": "We can combine multiple features for identifying correlations using a single plot.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-26",
+      "codeCellIndex": 26,
+      "codeText": "# grid = sns.FacetGrid(train_df, col='Pclass', hue='Survived')\ngrid = sns.FacetGrid(train_df, col='Survived', row='Pclass', size=2.2, aspect=1.6)\ngrid.map(plt.hist, 'Age', alpha=.5, bins=20)\ngrid.add_legend();",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_13",
+        "code_output_id": "code_14",
+        "text": "We can combine multiple features for identifying correlations using a single plot.",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-29",
+      "markdownCellIndex": 29,
+      "markdownText": "We can consider correlating Embarked (Categorical non-numeric), Sex (Categorical non-numeric), Fare (Numeric continuous), with Survived (Categorical numeric).",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-30",
+      "codeCellIndex": 30,
+      "codeText": "# grid = sns.FacetGrid(train_df, col='Embarked', hue='Survived', palette={0: 'k', 1: 'w'})\ngrid = sns.FacetGrid(train_df, row='Embarked', col='Survived', size=2.2, aspect=1.6)\ngrid.map(sns.barplot, 'Sex', 'Fare', alpha=.5, ci=None)\ngrid.add_legend()",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_15",
+        "code_output_id": "code_16",
+        "text": "We can consider correlating Embarked (Categorical non-numeric), Sex (Categorical non-numeric), Fare (Numeric continuous), with Survived (Categorical numeric).",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-31",
+      "markdownCellIndex": 31,
+      "markdownText": "Based on our assumptions and decisions we want to drop the Cabin (correcting #2) and Ticket (correcting #1) features.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-32",
+      "codeCellIndex": 32,
+      "codeText": "print(\"Before\", train_df.shape, test_df.shape, combine[0].shape, combine[1].shape)\n\ntrain_df = train_df.drop(['Ticket', 'Cabin'], axis=1)\ntest_df = test_df.drop(['Ticket', 'Cabin'], axis=1)\ncombine = [train_df, test_df]\n\n\"After\", train_df.shape, test_df.shape, combine[0].shape, combine[1].shape",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_16",
+        "code_output_id": "code_17",
+        "text": "Based on our assumptions and decisions we want to drop the Cabin (correcting #2) and Ticket (correcting #1) features.",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-33",
+      "markdownCellIndex": 33,
+      "markdownText": "In the following code we extract Title feature using regular expressions. The RegEx pattern `(\\w+\\.)` matches the first word which ends with a dot character within Name feature. The `expand=False` flag returns a DataFrame.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-34",
+      "codeCellIndex": 34,
+      "codeText": "for dataset in combine:\n    dataset['Title'] = dataset.Name.str.extract(' ([A-Za-z]+)\\.', expand=False)\n\npd.crosstab(train_df['Title'], train_df['Sex'])",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_17",
+        "code_output_id": "code_18",
+        "text": "In the following code we extract Title feature using regular expressions. The RegEx pattern `(\\w+\\.)` matches the first word which ends with a dot character within Name feature. The `expand=False` flag returns a DataFrame.",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-35",
+      "markdownCellIndex": 35,
+      "markdownText": "We can replace many titles with a more common name or classify them as `Rare`.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-36",
+      "codeCellIndex": 36,
+      "codeText": "for dataset in combine:\n    dataset['Title'] = dataset['Title'].replace(['Lady', 'Countess','Capt', 'Col',\\\n \t'Don', 'Dr', 'Major', 'Rev', 'Sir', 'Jonkheer', 'Dona'], 'Rare')\n\n    dataset['Title'] = dataset['Title'].replace('Mlle', 'Miss')\n    dataset['Title'] = dataset['Title'].replace('Ms', 'Miss')\n    dataset['Title'] = dataset['Title'].replace('Mme', 'Mrs')\n    \ntrain_df[['Title', 'Survived']].groupby(['Title'], as_index=False).mean()",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_18",
+        "code_output_id": "code_19",
+        "text": "ALL--TEXT",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-37",
+      "markdownCellIndex": 37,
+      "markdownText": "We can convert the categorical titles to ordinal.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-38",
+      "codeCellIndex": 38,
+      "codeText": "title_mapping = {\"Mr\": 1, \"Miss\": 2, \"Mrs\": 3, \"Master\": 4, \"Rare\": 5}\nfor dataset in combine:\n    dataset['Title'] = dataset['Title'].map(title_mapping)\n    dataset['Title'] = dataset['Title'].fillna(0)\n\ntrain_df.head()",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_19",
+        "code_output_id": "code_20",
+        "text": "ALL--TEXT",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-39",
+      "markdownCellIndex": 39,
+      "markdownText": "Now we can safely drop the Name feature from training and testing datasets. We also do not need the PassengerId feature in the training dataset.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-40",
+      "codeCellIndex": 40,
+      "codeText": "train_df = train_df.drop(['Name', 'PassengerId'], axis=1)\ntest_df = test_df.drop(['Name'], axis=1)\ncombine = [train_df, test_df]\ntrain_df.shape, test_df.shape",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_20",
+        "code_output_id": "code_21",
+        "text": "ALL--TEXT",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-41",
+      "markdownCellIndex": 41,
+      "markdownText": "converting Sex feature to a new feature called Gender where female=1 and male=0",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-42",
+      "codeCellIndex": 42,
+      "codeText": "for dataset in combine:\n    dataset['Sex'] = dataset['Sex'].map( {'female': 1, 'male': 0} ).astype(int)\n\ntrain_df.head()",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_21",
+        "code_output_id": "code_22",
+        "text": "converting Sex feature to a new feature called Gender where female=1 and male=0",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-45",
+      "markdownCellIndex": 45,
+      "markdownText": "preparing an empty array to contain guessed Age values",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-46",
+      "codeCellIndex": 46,
+      "codeText": "guess_ages = np.zeros((2,3))\nguess_ages",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_23",
+        "code_output_id": "code_24",
+        "text": "preparing an empty array to contain guessed Age values",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-47",
+      "markdownCellIndex": 47,
+      "markdownText": "Now we iterate over Sex (0 or 1) and Pclass (1, 2, 3) to calculate guessed values of Age for the six combinations.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-46",
+      "codeCellIndex": 46,
+      "codeText": "np.zeros((2,3))",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "excerpt",
+      "legacyLabel": {
+        "md_id": "md_24",
+        "code_output_id": "code_24",
+        "text": "ALL--TEXT",
+        "code_output": "np.zeros((2,3))"
+      }
+    },
+    {
+      "markdownCellId": "cell-47",
+      "markdownCellIndex": 47,
+      "markdownText": "Now we iterate over Sex (0 or 1) and Pclass (1, 2, 3) to calculate guessed values of Age for the six combinations.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-48",
+      "codeCellIndex": 48,
+      "codeText": "for i in range(0, 2):\nfor j in range(0, 3):",
+      "codeSpanIsVerbatim": false,
+      "codeScope": "excerpt",
+      "legacyLabel": {
+        "md_id": "md_24",
+        "code_output_id": "code_25",
+        "text": "ALL--TEXT",
+        "code_output": "for i in range(0, 2):\nfor j in range(0, 3):"
+      }
+    },
+    {
+      "markdownCellId": "cell-49",
+      "markdownCellIndex": 49,
+      "markdownText": "Let us create Age bands and determine correlations with Survived.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-50",
+      "codeCellIndex": 50,
+      "codeText": "train_df['AgeBand'] = pd.cut(train_df['Age'], 5)\ntrain_df[['AgeBand', 'Survived']].groupby(['AgeBand'], as_index=False).mean().sort_values(by='AgeBand', ascending=True)",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_25",
+        "code_output_id": "code_26",
+        "text": "ALL--TEXT",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-51",
+      "markdownCellIndex": 51,
+      "markdownText": "Let us replace Age with ordinals based on these bands.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-52",
+      "codeCellIndex": 52,
+      "codeText": "for dataset in combine:    \n    dataset.loc[ dataset['Age'] <= 16, 'Age'] = 0\n    dataset.loc[(dataset['Age'] > 16) & (dataset['Age'] <= 32), 'Age'] = 1\n    dataset.loc[(dataset['Age'] > 32) & (dataset['Age'] <= 48), 'Age'] = 2\n    dataset.loc[(dataset['Age'] > 48) & (dataset['Age'] <= 64), 'Age'] = 3\n    dataset.loc[ dataset['Age'] > 64, 'Age']\ntrain_df.head()",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_26",
+        "code_output_id": "code_27",
+        "text": "ALL--TEXT",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-53",
+      "markdownCellIndex": 53,
+      "markdownText": "We can not remove the AgeBand feature.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-54",
+      "codeCellIndex": 54,
+      "codeText": "train_df = train_df.drop(['AgeBand'], axis=1)\ncombine = [train_df, test_df]\ntrain_df.head()",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_27",
+        "code_output_id": "code_28",
+        "text": "ALL--TEXT",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-55",
+      "markdownCellIndex": 55,
+      "markdownText": "create a new feature for FamilySize which combines Parch and SibSp",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-56",
+      "codeCellIndex": 56,
+      "codeText": "for dataset in combine:\n    dataset['FamilySize'] = dataset['SibSp'] + dataset['Parch'] + 1\n\ntrain_df[['FamilySize', 'Survived']].groupby(['FamilySize'], as_index=False).mean().sort_values(by='Survived', ascending=False)",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_28",
+        "code_output_id": "code_29",
+        "text": "create a new feature for FamilySize which combines Parch and SibSp",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-57",
+      "markdownCellIndex": 57,
+      "markdownText": "We can create another feature called IsAlone.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-58",
+      "codeCellIndex": 58,
+      "codeText": "for dataset in combine:\n    dataset['IsAlone'] = 0\n    dataset.loc[dataset['FamilySize'] == 1, 'IsAlone'] = 1\n\ntrain_df[['IsAlone', 'Survived']].groupby(['IsAlone'], as_index=False).mean()",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_29",
+        "code_output_id": "code_30",
+        "text": "ALL--TEXT",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-59",
+      "markdownCellIndex": 59,
+      "markdownText": "Let us drop Parch, SibSp, and FamilySize features in favor of IsAlone.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-58",
+      "codeCellIndex": 58,
+      "codeText": "for dataset in combine:\n    dataset['IsAlone'] = 0\n    dataset.loc[dataset['FamilySize'] == 1, 'IsAlone'] = 1\n\ntrain_df[['IsAlone', 'Survived']].groupby(['IsAlone'], as_index=False).mean()",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_30",
+        "code_output_id": "code_30",
+        "text": "ALL--TEXT",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-59",
+      "markdownCellIndex": 59,
+      "markdownText": "Let us drop Parch, SibSp, and FamilySize features in favor of IsAlone.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-60",
+      "codeCellIndex": 60,
+      "codeText": "train_df = train_df.drop(['Parch', 'SibSp', 'FamilySize'], axis=1)\ntest_df = test_df.drop(['Parch', 'SibSp', 'FamilySize'], axis=1)\ncombine = [train_df, test_df]\n\ntrain_df.head()",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_30",
+        "code_output_id": "code_31",
+        "text": "ALL--TEXT",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-61",
+      "markdownCellIndex": 61,
+      "markdownText": "We can also create an artificial feature combining Pclass and Age.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-62",
+      "codeCellIndex": 62,
+      "codeText": "for dataset in combine:\n    dataset['Age*Class'] = dataset.Age * dataset.Pclass\n\ntrain_df.loc[:, ['Age*Class', 'Age', 'Pclass']].head(10)",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_31",
+        "code_output_id": "code_32",
+        "text": "ALL--TEXT",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-63",
+      "markdownCellIndex": 63,
+      "markdownText": "### Completing a categorical feature\n\nEmbarked feature takes S, Q, C values based on port of embarkation. Our training dataset has two missing values. We simply fill these with the most common occurance.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-64",
+      "codeCellIndex": 64,
+      "codeText": "freq_port = train_df.Embarked.dropna().mode()[0]\nfreq_port",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_32",
+        "code_output_id": "code_33",
+        "text": "ALL--TEXT",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-63",
+      "markdownCellIndex": 63,
+      "markdownText": "fill these with the most common occurance",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-65",
+      "codeCellIndex": 65,
+      "codeText": "for dataset in combine:\ndataset['Embarked'] = dataset['Embarked'].fillna(freq_port)",
+      "codeSpanIsVerbatim": false,
+      "codeScope": "excerpt",
+      "legacyLabel": {
+        "md_id": "md_32",
+        "code_output_id": "code_34",
+        "text": "fill these with the most common occurance",
+        "code_output": "for dataset in combine:\ndataset['Embarked'] = dataset['Embarked'].fillna(freq_port)"
+      }
+    },
+    {
+      "markdownCellId": "cell-63",
+      "markdownCellIndex": 63,
+      "markdownText": "### Completing a categorical feature\n\nEmbarked feature takes S, Q, C values based on port of embarkation. Our training dataset has two missing values. We simply fill these with the most common occurance.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-65",
+      "codeCellIndex": 65,
+      "codeText": "for dataset in combine:\ndataset['Embarked'] = dataset['Embarked'].fillna(freq_port)",
+      "codeSpanIsVerbatim": false,
+      "codeScope": "excerpt",
+      "legacyLabel": {
+        "md_id": "md_32",
+        "code_output_id": "code_34",
+        "text": "ALL--TEXT",
+        "code_output": "for dataset in combine:\ndataset['Embarked'] = dataset['Embarked'].fillna(freq_port)"
+      }
+    },
+    {
+      "markdownCellId": "cell-66",
+      "markdownCellIndex": 66,
+      "markdownText": "convert the EmbarkedFill feature by creating a new numeric Port feature",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-67",
+      "codeCellIndex": 67,
+      "codeText": "for dataset in combine:\n    dataset['Embarked'] = dataset['Embarked'].map( {'S': 0, 'C': 1, 'Q': 2} ).astype(int)\n\ntrain_df.head()",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_33",
+        "code_output_id": "code_35",
+        "text": "convert the EmbarkedFill feature by creating a new numeric Port feature",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-68",
+      "markdownCellIndex": 68,
+      "markdownText": "complete the Fare feature for single missing value in test dataset using mode to get the value that occurs most frequently for this feature",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-69",
+      "codeCellIndex": 69,
+      "codeText": "test_df['Fare'].fillna(test_df['Fare'].dropna().median(), inplace=True)\ntest_df.head()",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_34",
+        "code_output_id": "code_36",
+        "text": "complete the Fare feature for single missing value in test dataset using mode to get the value that occurs most frequently for this feature",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-70",
+      "markdownCellIndex": 70,
+      "markdownText": "We can not create FareBand.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-71",
+      "codeCellIndex": 71,
+      "codeText": "train_df['FareBand'] = pd.qcut(train_df['Fare'], 4)\ntrain_df[['FareBand', 'Survived']].groupby(['FareBand'], as_index=False).mean().sort_values(by='FareBand', ascending=True)",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_35",
+        "code_output_id": "code_37",
+        "text": "ALL--TEXT",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-72",
+      "markdownCellIndex": 72,
+      "markdownText": "Convert the Fare feature to ordinal values based on the FareBand.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-73",
+      "codeCellIndex": 73,
+      "codeText": "for dataset in combine:\n    dataset.loc[ dataset['Fare'] <= 7.91, 'Fare'] = 0\n    dataset.loc[(dataset['Fare'] > 7.91) & (dataset['Fare'] <= 14.454), 'Fare'] = 1\n    dataset.loc[(dataset['Fare'] > 14.454) & (dataset['Fare'] <= 31), 'Fare']   = 2\n    dataset.loc[ dataset['Fare'] > 31, 'Fare'] = 3\n    dataset['Fare'] = dataset['Fare'].astype(int)\n\ntrain_df = train_df.drop(['FareBand'], axis=1)\ncombine = [train_df, test_df]\n    \ntrain_df.head(10)",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_36",
+        "code_output_id": "code_38",
+        "text": "ALL--TEXT",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-74",
+      "markdownCellIndex": 74,
+      "markdownText": "And the test dataset.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-75",
+      "codeCellIndex": 75,
+      "codeText": "test_df.head(10)",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_37",
+        "code_output_id": "code_39",
+        "text": "ALL--TEXT",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-78",
+      "markdownCellIndex": 78,
+      "markdownText": "Logistic Regression is a useful model to run early in the workflow. Logistic regression measures the relationship between the categorical dependent variable (feature) and one or more independent variables (features) by estimating probabilities using a logistic function, which is the cumulative logistic distribution. Reference [Wikipedia](https:#en.wikipedia.org/wiki/Logistic_regression).",
+      "markdownSpanIsVerbatim": false,
+      "codeCellId": "cell-79",
+      "codeCellIndex": 79,
+      "codeText": "LogisticRegression()",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "excerpt",
+      "legacyLabel": {
+        "md_id": "md_39",
+        "code_output_id": "code_41",
+        "text": "Logistic Regression is a useful model to run early in the workflow. Logistic regression measures the relationship between the categorical dependent variable (feature) and one or more independent variables (features) by estimating probabilities using a logistic function, which is the cumulative logistic distribution. Reference [Wikipedia](https:#en.wikipedia.org/wiki/Logistic_regression).",
+        "code_output": "LogisticRegression()"
+      }
+    },
+    {
+      "markdownCellId": "cell-78",
+      "markdownCellIndex": 78,
+      "markdownText": "the confidence score generated by the model based on our training dataset",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-79",
+      "codeCellIndex": 79,
+      "codeText": "logreg.fit(X_train, Y_train)",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "excerpt",
+      "legacyLabel": {
+        "md_id": "md_39",
+        "code_output_id": "code_41",
+        "text": "the confidence score generated by the model based on our training dataset",
+        "code_output": "logreg.fit(X_train, Y_train)"
+      }
+    },
+    {
+      "markdownCellId": "cell-82",
+      "markdownCellIndex": 82,
+      "markdownText": "Next we model using Support Vector Machines which are supervised learning models with associated learning algorithms that analyze data used for classification and regression analysis. Given a set of training samples, each marked as belonging to one or the other of **two categories**, an SVM training algorithm builds a model that assigns new test samples to one category or the other, making it a non-probabilistic binary linear classifier.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-83",
+      "codeCellIndex": 83,
+      "codeText": "SVC()",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "excerpt",
+      "legacyLabel": {
+        "md_id": "md_41",
+        "code_output_id": "code_43",
+        "text": "Next we model using Support Vector Machines which are supervised learning models with associated learning algorithms that analyze data used for classification and regression analysis. Given a set of training samples, each marked as belonging to one or the other of **two categories**, an SVM training algorithm builds a model that assigns new test samples to one category or the other, making it a non-probabilistic binary linear classifier.",
+        "code_output": "SVC()"
+      }
+    },
+    {
+      "markdownCellId": "cell-84",
+      "markdownCellIndex": 84,
+      "markdownText": "In pattern recognition, the k-Nearest Neighbors algorithm (or k-NN for short) is a non-parametric method used for classification and regression. A sample is classified by a majority vote of its neighbors, with the sample being assigned to the class most common among its k nearest neighbors (k is a positive integer, typically small). If k = 1, then the object is simply assigned to the class of that single nearest neighbor.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-85",
+      "codeCellIndex": 85,
+      "codeText": "KNeighborsClassifier(n_neighbors = 3)",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "excerpt",
+      "legacyLabel": {
+        "md_id": "md_42",
+        "code_output_id": "code_44",
+        "text": "In pattern recognition, the k-Nearest Neighbors algorithm (or k-NN for short) is a non-parametric method used for classification and regression. A sample is classified by a majority vote of its neighbors, with the sample being assigned to the class most common among its k nearest neighbors (k is a positive integer, typically small). If k = 1, then the object is simply assigned to the class of that single nearest neighbor.",
+        "code_output": "KNeighborsClassifier(n_neighbors = 3)"
+      }
+    },
+    {
+      "markdownCellId": "cell-86",
+      "markdownCellIndex": 86,
+      "markdownText": " In machine learning, naive Bayes classifiers are a family of simple probabilistic classifiers based on applying Bayes' theorem with strong (naive) independence assumptions between the features. Naive Bayes classifiers are highly scalable, requiring a number of parameters linear in the number of variables (features) in a learning problem",
+      "markdownSpanIsVerbatim": false,
+      "codeCellId": "cell-87",
+      "codeCellIndex": 87,
+      "codeText": "GaussianNB()",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "excerpt",
+      "legacyLabel": {
+        "md_id": "md_43",
+        "code_output_id": "code_45",
+        "text": " In machine learning, naive Bayes classifiers are a family of simple probabilistic classifiers based on applying Bayes' theorem with strong (naive) independence assumptions between the features. Naive Bayes classifiers are highly scalable, requiring a number of parameters linear in the number of variables (features) in a learning problem",
+        "code_output": "GaussianNB()"
+      }
+    },
+    {
+      "markdownCellId": "cell-88",
+      "markdownCellIndex": 88,
+      "markdownText": "The perceptron is an algorithm for supervised learning of binary classifiers (functions that can decide whether an input, represented by a vector of numbers, belongs to some specific class or not). It is a type of linear classifier, i.e. a classification algorithm that makes its predictions based on a linear predictor function combining a set of weights with the feature vector. The algorithm allows for online learning, in that it processes elements in the training set one at a time",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-89",
+      "codeCellIndex": 89,
+      "codeText": "Perceptron()",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "excerpt",
+      "legacyLabel": {
+        "md_id": "md_44",
+        "code_output_id": "code_46",
+        "text": "The perceptron is an algorithm for supervised learning of binary classifiers (functions that can decide whether an input, represented by a vector of numbers, belongs to some specific class or not). It is a type of linear classifier, i.e. a classification algorithm that makes its predictions based on a linear predictor function combining a set of weights with the feature vector. The algorithm allows for online learning, in that it processes elements in the training set one at a time",
+        "code_output": "Perceptron()"
+      }
+    },
+    {
+      "markdownCellId": "cell-92",
+      "markdownCellIndex": 92,
+      "markdownText": "This model uses a decision tree as a predictive model which maps features (tree branches) to conclusions about the target value (tree leaves). Tree models where the target variable can take a finite set of values are called classification trees; in these tree structures, leaves represent class labels and branches represent conjunctions of features that lead to those class labels. Decision trees where the target variable can take continuous values (typically real numbers) are called regression trees. Reference [Wikipedia](https:#en.wikipedia.org/wiki/Decision_tree_learning).",
+      "markdownSpanIsVerbatim": false,
+      "codeCellId": "cell-93",
+      "codeCellIndex": 93,
+      "codeText": "DecisionTreeClassifier()",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "excerpt",
+      "legacyLabel": {
+        "md_id": "md_45",
+        "code_output_id": "code_49",
+        "text": "This model uses a decision tree as a predictive model which maps features (tree branches) to conclusions about the target value (tree leaves). Tree models where the target variable can take a finite set of values are called classification trees; in these tree structures, leaves represent class labels and branches represent conjunctions of features that lead to those class labels. Decision trees where the target variable can take continuous values (typically real numbers) are called regression trees. Reference [Wikipedia](https:#en.wikipedia.org/wiki/Decision_tree_learning).",
+        "code_output": "DecisionTreeClassifier()"
+      }
+    },
+    {
+      "markdownCellId": "cell-94",
+      "markdownCellIndex": 94,
+      "markdownText": "The next model Random Forests is one of the most popular. Random forests or random decision forests are an ensemble learning method for classification, regression and other tasks, that operate by constructing a multitude of decision trees (n_estimators=100) at training time and outputting the class that is the mode of the classes (classification) or mean prediction (regression) of the individual trees.",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-95",
+      "codeCellIndex": 95,
+      "codeText": "RandomForestClassifier(n_estimators=100)",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "excerpt",
+      "legacyLabel": {
+        "md_id": "md_46",
+        "code_output_id": "code_50",
+        "text": "The next model Random Forests is one of the most popular. Random forests or random decision forests are an ensemble learning method for classification, regression and other tasks, that operate by constructing a multitude of decision trees (n_estimators=100) at training time and outputting the class that is the mode of the classes (classification) or mean prediction (regression) of the individual trees.",
+        "code_output": "RandomForestClassifier(n_estimators=100)"
+      }
+    },
+    {
+      "markdownCellId": "cell-96",
+      "markdownCellIndex": 96,
+      "markdownText": "rank our evaluation of all the models to choose the best one for our problem",
+      "markdownSpanIsVerbatim": true,
+      "codeCellId": "cell-97",
+      "codeCellIndex": 97,
+      "codeText": "models = pd.DataFrame({\n    'Model': ['Support Vector Machines', 'KNN', 'Logistic Regression', \n              'Random Forest', 'Naive Bayes', 'Perceptron', \n              'Stochastic Gradient Decent', 'Linear SVC', \n              'Decision Tree'],\n    'Score': [acc_svc, acc_knn, acc_log, \n              acc_random_forest, acc_gaussian, acc_perceptron, \n              acc_sgd, acc_linear_svc, acc_decision_tree]})\nmodels.sort_values(by='Score', ascending=False)",
+      "codeSpanIsVerbatim": true,
+      "codeScope": "whole_cell",
+      "legacyLabel": {
+        "md_id": "md_47",
+        "code_output_id": "code_51",
+        "text": "rank our evaluation of all the models to choose the best one for our problem",
+        "code_output": "ALL--CODE"
+      }
+    }
+  ]
+}

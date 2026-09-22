@@ -1,5 +1,27 @@
 import { Contents, ServerConnection } from '@jupyterlab/services';
 
+import { requestAPI } from './request';
+
+export interface INotebookRelationshipAnalysisResponse {
+  completedMarkdownCells: number;
+  failedMarkdownCells: number;
+  path: string;
+  status: 'success' | 'partial';
+}
+
+export interface OutputArtifact {
+  cellId: string;
+  cellIndex: number;
+  content: string;
+  kind: 'image' | 'table';
+  mimeType: string;
+  imageHeight?: number;
+  imageWidth?: number;
+  outputId: string;
+  outputIndex: number;
+  text?: string;
+}
+
 export interface SaveMediaRequest {
   cellIndex: number;
   mediaIndex: number;
@@ -55,7 +77,10 @@ export async function saveMediaToNotebookDirectory(
     contentsManager.resolvePath(mediaDirectory, filename)
   );
 
-  await contentsManager.save(path, buildFileModel(payload.mimeType, payload.rawData));
+  await contentsManager.save(
+    path,
+    buildFileModel(payload.mimeType, payload.rawData)
+  );
 
   return {
     directory: mediaDirectory,
@@ -65,16 +90,54 @@ export async function saveMediaToNotebookDirectory(
   };
 }
 
+/**
+ * Analyze every Markdown cell in a notebook and persist its relationship map.
+ */
+export async function analyzeNotebookRelationships(
+  notebookPath: string,
+  notebook: unknown
+): Promise<INotebookRelationshipAnalysisResponse> {
+  return requestAPI<INotebookRelationshipAnalysisResponse>(
+    'analyze-notebook',
+    ServerConnection.makeSettings(),
+    {
+      body: JSON.stringify({ notebookPath, notebook }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST'
+    }
+  );
+}
+
+/** Analyze Markdown references to captured chart and table outputs. */
+export async function analyzeNotebookOutputRelationships(
+  notebookPath: string,
+  notebook: unknown,
+  outputArtifacts: OutputArtifact[]
+): Promise<INotebookRelationshipAnalysisResponse> {
+  return requestAPI<INotebookRelationshipAnalysisResponse>(
+    'analyze-outputs',
+    ServerConnection.makeSettings(),
+    {
+      body: JSON.stringify({ notebookPath, notebook, outputArtifacts }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST'
+    }
+  );
+}
+
 function getNotebookDirectory(
   contentsManager: Contents.IManager,
   notebookPath: string
 ): string {
   const localPath = contentsManager.localPath(notebookPath);
   const slashIndex = localPath.lastIndexOf('/');
-  const localDirectory = slashIndex === -1 ? '' : localPath.slice(0, slashIndex);
+  const localDirectory =
+    slashIndex === -1 ? '' : localPath.slice(0, slashIndex);
   const drive = contentsManager.driveName(notebookPath);
 
-  return sanitizeContentsPath(drive ? `${drive}:${localDirectory}` : localDirectory);
+  return sanitizeContentsPath(
+    drive ? `${drive}:${localDirectory}` : localDirectory
+  );
 }
 
 async function ensureDirectory(
@@ -104,15 +167,22 @@ async function buildUniqueFilename(
   const notebookName = payload.notebookPath.split('/').pop() ?? 'notebook';
   const notebookStem = notebookName.replace(/\.ipynb$/i, '');
   const safeStem = slugify(notebookStem) || 'notebook';
-  const baseNameParts = [`${safeStem}-cell-${String(payload.cellIndex + 1).padStart(3, '0')}`];
+  const baseNameParts = [
+    `${safeStem}-cell-${String(payload.cellIndex + 1).padStart(3, '0')}`
+  ];
 
   if (payload.outputIndex !== null) {
-    baseNameParts.push(`output-${String(payload.outputIndex + 1).padStart(3, '0')}`);
+    baseNameParts.push(
+      `output-${String(payload.outputIndex + 1).padStart(3, '0')}`
+    );
   }
 
-  baseNameParts.push(`media-${String(payload.mediaIndex + 1).padStart(3, '0')}`);
+  baseNameParts.push(
+    `media-${String(payload.mediaIndex + 1).padStart(3, '0')}`
+  );
 
-  const extension = MIME_EXTENSION_MAP[payload.mimeType] ?? mimeToExtension(payload.mimeType);
+  const extension =
+    MIME_EXTENSION_MAP[payload.mimeType] ?? mimeToExtension(payload.mimeType);
   const baseName = baseNameParts.join('-');
 
   for (let index = 0; index < 1000; index += 1) {
@@ -201,7 +271,10 @@ function mimeToExtension(mimeType: string): string {
 }
 
 function slugify(value: string): string {
-  return value.replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/^[-_]+|[-_]+$/g, '').toLowerCase();
+  return value
+    .replace(/[^a-zA-Z0-9_-]+/g, '-')
+    .replace(/^[-_]+|[-_]+$/g, '')
+    .toLowerCase();
 }
 
 function sanitizeContentsPath(path: string): string {

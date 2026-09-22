@@ -1,0 +1,281 @@
+{
+  "version": 1,
+  "format": "linkmaker-code-only-ground-truth",
+  "sourceNotebook": "/Users/evli/Documents/Supplementary Material_v1 2 copy/4-Notebook/house .ipynb",
+  "sourceBaseline": "/Users/evli/Documents/Supplementary Material_v1 2 copy/5-Relationship of Notebook/house_relationship.json",
+  "selectionRule": "Retain only legacy labels whose code_output_id starts with code_. Exclude all output and sketch labels.",
+  "relationshipCount": 15,
+  "excludedOutputOrSketchLabelCount": 41,
+  "relationships": [
+    {
+      "markdownCellId": "cell-6",
+      "markdownCellIndex": 6,
+      "markdownText": "You know 'SalePrice', could you give me some data about you?",
+      "codeCellId": "cell-7",
+      "codeCellIndex": 7,
+      "codeScope": "excerpt",
+      "codeText": "df_train['SalePrice'].describe()",
+      "relationshipType": "documents_behavior",
+      "confidence": 1.0,
+      "reason": "Curated legacy baseline label normalized to exact notebook source spans.",
+      "legacyLabel": {
+        "md_id": "md_4",
+        "code_output_id": "code_4",
+        "text": "You know 'SalePrice', could you give me some data about you?",
+        "code_output": "df_train['SalePrice'].describe()"
+      }
+    },
+    {
+      "markdownCellId": "cell-10",
+      "markdownCellIndex": 10,
+      "markdownText": "I also see that you:*\n\n* *<b>Deviate from the normal distribution.</b>*\n* *<b>Have appreciable positive skewness.</b>*\n* *<b>Show peakedness.</b>*",
+      "codeCellId": "cell-9",
+      "codeCellIndex": 9,
+      "codeScope": "whole_cell",
+      "codeText": "\n#histogram\nsns.distplot(df_train['SalePrice']);",
+      "relationshipType": "documents_behavior",
+      "confidence": 1.0,
+      "reason": "Curated legacy baseline label normalized to exact notebook source spans.",
+      "legacyLabel": {
+        "md_id": "md_6",
+        "code_output_id": "code_5",
+        "text": "I also see that you:\n<b>Deviate from the normal distribution.</b>\n<b>Have appreciable positive skewness.</b>\n<b>Show peakedness.</b>",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-10",
+      "markdownCellIndex": 10,
+      "markdownText": "body measures?",
+      "codeCellId": "cell-11",
+      "codeCellIndex": 11,
+      "codeScope": "whole_cell",
+      "codeText": "#skewness and kurtosis\nprint(\"Skewness: %f\" % df_train['SalePrice'].skew())\nprint(\"Kurtosis: %f\" % df_train['SalePrice'].kurt())",
+      "relationshipType": "documents_behavior",
+      "confidence": 1.0,
+      "reason": "Curated legacy baseline label normalized to exact notebook source spans.",
+      "legacyLabel": {
+        "md_id": "md_6",
+        "code_output_id": "code_6",
+        "text": "body measures?",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-17",
+      "markdownCellIndex": 17,
+      "markdownText": "And what about 'TotalBsmtSF'?",
+      "codeCellId": "cell-18",
+      "codeCellIndex": 18,
+      "codeScope": "whole_cell",
+      "codeText": "#scatter plot totalbsmtsf/saleprice\nvar = 'TotalBsmtSF'\ndata = pd.concat([df_train['SalePrice'], df_train[var]], axis=1)\ndata.plot.scatter(x=var, y='SalePrice', ylim=(0,800000));",
+      "relationshipType": "documents_behavior",
+      "confidence": 1.0,
+      "reason": "Curated legacy baseline label normalized to exact notebook source spans.",
+      "legacyLabel": {
+        "md_id": "md_11",
+        "code_output_id": "code_8",
+        "text": "And what about 'TotalBsmtSF'?",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-27",
+      "markdownCellIndex": 27,
+      "markdownText": "Correlation matrix (heatmap style).",
+      "codeCellId": "cell-29",
+      "codeCellIndex": 29,
+      "codeScope": "whole_cell",
+      "codeText": "#correlation matrix\ncorrmat = df_train.corr()\nf, ax = plt.subplots(figsize=(12, 9))\nsns.heatmap(corrmat, vmax=.8, square=True);",
+      "relationshipType": "documents_behavior",
+      "confidence": 1.0,
+      "reason": "Curated legacy baseline label normalized to exact notebook source spans.",
+      "legacyLabel": {
+        "md_id": "md_18",
+        "code_output_id": "code_11",
+        "text": "Correlation matrix (heatmap style).",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-27",
+      "markdownCellIndex": 27,
+      "markdownText": "'SalePrice' correlation matrix (zoomed heatmap style).",
+      "codeCellId": "cell-32",
+      "codeCellIndex": 32,
+      "codeScope": "whole_cell",
+      "codeText": "#saleprice correlation matrix\nk = 10 #number of variables for heatmap\ncols = corrmat.nlargest(k, 'SalePrice')['SalePrice'].index\ncm = np.corrcoef(df_train[cols].values.T)\nsns.set(font_scale=1.25)\nhm = sns.heatmap(cm, cbar=True, annot=True, square=True, fmt='.2f', annot_kws={'size': 10}, yticklabels=cols.values, xticklabels=cols.values)\nplt.show()",
+      "relationshipType": "documents_behavior",
+      "confidence": 1.0,
+      "reason": "Curated legacy baseline label normalized to exact notebook source spans.",
+      "legacyLabel": {
+        "md_id": "md_18",
+        "code_output_id": "code_12",
+        "text": "'SalePrice' correlation matrix (zoomed heatmap style).",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-27",
+      "markdownCellIndex": 27,
+      "markdownText": "Scatter plots between the most correlated variables (move like Jagger style).",
+      "codeCellId": "cell-36",
+      "codeCellIndex": 36,
+      "codeScope": "whole_cell",
+      "codeText": "#scatterplot\nsns.set()\ncols = ['SalePrice', 'OverallQual', 'GrLivArea', 'GarageCars', 'TotalBsmtSF', 'FullBath', 'YearBuilt']\nsns.pairplot(df_train[cols], size = 2.5)\nplt.show();",
+      "relationshipType": "documents_behavior",
+      "confidence": 1.0,
+      "reason": "Curated legacy baseline label normalized to exact notebook source spans.",
+      "legacyLabel": {
+        "md_id": "md_18",
+        "code_output_id": "code_13",
+        "text": "Scatter plots between the most correlated variables (move like Jagger style).",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-38",
+      "markdownCellIndex": 38,
+      "markdownText": "# 4. Missing data\n\nImportant questions when thinking about missing data:\n\n* How prevalent is the missing data?\n* Is missing data random or does it have a pattern?\n\nThe answer to these questions is important for practical reasons because missing data can imply a reduction of the sample size. This can prevent us from proceeding with the analysis. Moreover, from a substantive perspective, we need to ensure that the missing data process is not biased and hidding an inconvenient truth.",
+      "codeCellId": "cell-39",
+      "codeCellIndex": 39,
+      "codeScope": "whole_cell",
+      "codeText": "#missing data\ntotal = df_train.isnull().sum().sort_values(ascending=False)\npercent = (df_train.isnull().sum()/df_train.isnull().count()).sort_values(ascending=False)\nmissing_data = pd.concat([total, percent], axis=1, keys=['Total', 'Percent'])\nmissing_data.head(20)",
+      "relationshipType": "documents_behavior",
+      "confidence": 1.0,
+      "reason": "Curated legacy baseline label normalized to exact notebook source spans.",
+      "legacyLabel": {
+        "md_id": "md_26",
+        "code_output_id": "code_14",
+        "text": "ALL--TEXT",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-40",
+      "markdownCellIndex": 40,
+      "markdownText": "In summary, to handle missing data, we'll delete all the variables with missing data, except the variable 'Electrical'. In 'Electrical' we'll just delete the observation with missing data.",
+      "codeCellId": "cell-41",
+      "codeCellIndex": 41,
+      "codeScope": "whole_cell",
+      "codeText": "#dealing with missing data\ndf_train = df_train.drop((missing_data[missing_data['Total'] > 1]).index,1)\ndf_train = df_train.drop(df_train.loc[df_train['Electrical'].isnull()].index)\ndf_train.isnull().sum().max() #just checking that there's no missing data missing...",
+      "relationshipType": "documents_behavior",
+      "confidence": 1.0,
+      "reason": "Curated legacy baseline label normalized to exact notebook source spans.",
+      "legacyLabel": {
+        "md_id": "md_27",
+        "code_output_id": "code_15",
+        "text": "In summary, to handle missing data, we'll delete all the variables with missing data, except the variable 'Electrical'. In 'Electrical' we'll just delete the observation with missing data.",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-40",
+      "markdownCellIndex": 40,
+      "markdownText": "we have one missing observation in 'Electrical'. Since it is just one observation, we'll delete this observation and keep the variable.",
+      "codeCellId": "cell-41",
+      "codeCellIndex": 41,
+      "codeScope": "excerpt",
+      "codeText": "df_train = df_train.drop(df_train.loc[df_train['Electrical'].isnull()].index)",
+      "relationshipType": "documents_behavior",
+      "confidence": 1.0,
+      "reason": "Curated legacy baseline label normalized to exact notebook source spans.",
+      "legacyLabel": {
+        "md_id": "md_27",
+        "code_output_id": "code_15",
+        "text": "we have one missing observation in 'Electrical'. Since it is just one observation, we'll delete this observation and keep the variable.",
+        "code_output": "df_train = df_train.drop(df_train.loc[df_train['Electrical'].isnull()].index)"
+      }
+    },
+    {
+      "markdownCellId": "cell-44",
+      "markdownCellIndex": 44,
+      "markdownText": "To establish a threshold that defines an observation as an outlier, we'll standardize the data. In this context, data standardization means converting data values to have mean of 0 and a standard deviation of 1.",
+      "codeCellId": "cell-45",
+      "codeCellIndex": 45,
+      "codeScope": "excerpt",
+      "codeText": "saleprice_scaled = StandardScaler().fit_transform(df_train['SalePrice'][:,np.newaxis])",
+      "relationshipType": "documents_behavior",
+      "confidence": 1.0,
+      "reason": "Curated legacy baseline label normalized to exact notebook source spans.",
+      "legacyLabel": {
+        "md_id": "md_30",
+        "code_output_id": "code_16",
+        "text": "ALL--TEXT",
+        "code_output": "saleprice_scaled = StandardScaler().fit_transform(df_train['SalePrice'][:,np.newaxis])"
+      }
+    },
+    {
+      "markdownCellId": "cell-57",
+      "markdownCellIndex": 57,
+      "markdownText": "* <b>Histogram</b> - Kurtosis and skewness.\n* <b>Normal probability plot</b> - Data distribution should closely follow the diagonal that represents the normal distribution.",
+      "codeCellId": "cell-58",
+      "codeCellIndex": 58,
+      "codeScope": "whole_cell",
+      "codeText": "#histogram and normal probability plot\nsns.distplot(df_train['SalePrice'], fit=norm);\nfig = plt.figure()\nres = stats.probplot(df_train['SalePrice'], plot=plt)",
+      "relationshipType": "documents_behavior",
+      "confidence": 1.0,
+      "reason": "Curated legacy baseline label normalized to exact notebook source spans.",
+      "legacyLabel": {
+        "md_id": "md_39",
+        "code_output_id": "code_20",
+        "text": "Histogram - Kurtosis and skewness.\nNormal probability plot - Data distribution should closely follow the diagonal that represents the normal distribution.",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-59",
+      "markdownCellIndex": 59,
+      "markdownText": "in case of positive skewness, log transformations usually works well",
+      "codeCellId": "cell-60",
+      "codeCellIndex": 60,
+      "codeScope": "whole_cell",
+      "codeText": "#applying log transformation\ndf_train['SalePrice'] = np.log(df_train['SalePrice'])",
+      "relationshipType": "documents_behavior",
+      "confidence": 1.0,
+      "reason": "Curated legacy baseline label normalized to exact notebook source spans.",
+      "legacyLabel": {
+        "md_id": "md_40",
+        "code_output_id": "code_21",
+        "text": "in case of positive skewness, log transformations usually works well",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-69",
+      "markdownCellIndex": 69,
+      "markdownText": "create a variable that can get the effect of having or not having basement (binary variable).",
+      "codeCellId": "cell-70",
+      "codeCellIndex": 70,
+      "codeScope": "whole_cell",
+      "codeText": "#create column for new variable (one is enough because it's a binary categorical feature)\n#if area>0 it gets 1, for area==0 it gets 0\ndf_train['HasBsmt'] = pd.Series(len(df_train['TotalBsmtSF']), index=df_train.index)\ndf_train['HasBsmt'] = 0 \ndf_train.loc[df_train['TotalBsmtSF']>0,'HasBsmt'] = 1",
+      "relationshipType": "documents_behavior",
+      "confidence": 1.0,
+      "reason": "Curated legacy baseline label normalized to exact notebook source spans.",
+      "legacyLabel": {
+        "md_id": "md_44",
+        "code_output_id": "code_27",
+        "text": "create a variable that can get the effect of having or not having basement (binary variable).",
+        "code_output": "ALL--CODE"
+      }
+    },
+    {
+      "markdownCellId": "cell-69",
+      "markdownCellIndex": 69,
+      "markdownText": "we'll do a log transformation to all the non-zero observations, ignoring those with value zero.",
+      "codeCellId": "cell-71",
+      "codeCellIndex": 71,
+      "codeScope": "whole_cell",
+      "codeText": "#transform data\ndf_train.loc[df_train['HasBsmt']==1,'TotalBsmtSF'] = np.log(df_train['TotalBsmtSF'])",
+      "relationshipType": "documents_behavior",
+      "confidence": 1.0,
+      "reason": "Curated legacy baseline label normalized to exact notebook source spans.",
+      "legacyLabel": {
+        "md_id": "md_44",
+        "code_output_id": "code_28",
+        "text": "we'll do a log transformation to all the non-zero observations, ignoring those with value zero.",
+        "code_output": "ALL--CODE"
+      }
+    }
+  ]
+}
