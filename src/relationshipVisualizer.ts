@@ -1,3 +1,7 @@
+import {
+  attachRelationshipTooltip,
+  IRelationshipTooltipContent
+} from './relationshipTooltip';
 import { StateEffect, StateField } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView } from '@codemirror/view';
 import { CodeCell } from '@jupyterlab/cells';
@@ -19,6 +23,7 @@ interface MarkdownAnalysis {
 }
 
 interface Relationship {
+  reason?: string;
   markdownPortion?: TextPortion;
   codeTarget?: {
     index?: number;
@@ -95,6 +100,7 @@ export interface IRenderedMarkdownRelationshipTarget {
 }
 
 interface ICodeHighlightSpec {
+  reason: string;
   color: string;
   from: number;
   relationshipId: string;
@@ -117,10 +123,31 @@ const RELATIONSHIP_COLORS = [
   '#ff922b',
   '#748ffc'
 ];
+type MarkdownRelationshipHighlightKind = 'code' | 'output';
+
+interface IMarkdownRelationshipHighlight {
+  color: string;
+  kind: MarkdownRelationshipHighlightKind;
+  relationshipIds: string[];
+  ranges: Range[];
+}
+
 const activeHighlightNames = new WeakMap<NotebookPanel, Set<string>>();
 const activeCodeEditors = new WeakMap<NotebookPanel, Set<EditorView>>();
 const highlightVersions = new WeakMap<NotebookPanel, number>();
 const markdownRangeLinks = new WeakMap<HTMLElement, IMarkdownRangeLink[]>();
+const relationshipReasons = new WeakMap<HTMLElement, Map<string, string>>();
+const relationshipKinds = new WeakMap<
+  HTMLElement,
+  Map<string, 'code' | 'output'>
+>();
+const relationshipColors = new WeakMap<HTMLElement, Map<string, string>>();
+const markdownHighlightRanges = new WeakMap<
+  NotebookPanel,
+  Map<string, IMarkdownRelationshipHighlight>
+>();
+const reasonHoverHandlers = new WeakMap<HTMLElement, () => void>();
+const tooltipCleanupPanels = new WeakSet<NotebookPanel>();
 const setCodeHighlights = StateEffect.define<ICodeHighlightSpec[]>({
   map: (highlights, changes) =>
     highlights.map(highlight => ({
@@ -191,6 +218,10 @@ export async function applyRelationshipHighlights(
   panel: NotebookPanel,
   relationshipFile: RelationshipFile | null
 ): Promise<number> {
+  if (!tooltipCleanupPanels.has(panel)) {
+    panel.disposed.connect(() => clearRelationshipHighlightsInternal(panel));
+    tooltipCleanupPanels.add(panel);
+  }
   const version = (highlightVersions.get(panel) ?? 0) + 1;
   highlightVersions.set(panel, version);
   clearRelationshipHighlightsInternal(panel);
@@ -215,7 +246,7 @@ export async function applyRelationshipHighlights(
   const highlightedIndexes = new Set<number>();
   const relationshipRanges = new Map<
     string,
-    { color: string; ranges: Range[] }
+    IMarkdownRelationshipHighlight
   >();
   const codeHighlights = new Map<HTMLElement, ICodeHighlightSpec[]>();
   const portionGroups = new Map<
@@ -225,6 +256,7 @@ export async function applyRelationshipHighlights(
       highlightName: string;
       markdownAdded: boolean;
       ranges: Range[];
+      relationshipIds: string[];
     }
   >();
   let relationshipNumber = 0;
@@ -252,16 +284,20 @@ export async function applyRelationshipHighlights(
           color,
           highlightName: `${getPanelHighlightPrefix(panel)}-${portionNumber}`,
           markdownAdded: false,
-          ranges: []
+          ranges: [],
+          relationshipIds: []
         };
         portionGroups.set(portionKey, group);
         relationshipRanges.set(group.highlightName, {
           color: group.color,
+          kind: 'code',
+          relationshipIds: [],
           ranges: group.ranges
         });
         portionNumber += 1;
       }
       const { color, ranges } = group;
+      group.relationshipIds.push(String(relationshipNumber));
       const renderedPortion = renderedPortions.get(portionKey) ?? '';
       const occurrence = getPortionOccurrence(
         markdownWidget?.model.sharedModel.getSource() ?? '',
@@ -273,7 +309,13 @@ export async function applyRelationshipHighlights(
         occurrence
       );
       if (markdownWidget) {
-        markCellRelationship(markdownWidget.node, relationshipNumber, color);
+        markCellRelationship(
+          markdownWidget.node,
+          relationshipNumber,
+          color,
+          relationship.reason,
+          'code'
+        );
         markMarkdownPortionRelationship(
           markdownWidget.node,
           relationshipNumber,
@@ -308,10 +350,19 @@ export async function applyRelationshipHighlights(
         );
         const wholeCell = relationship.codeTarget?.scope === 'whole_cell';
         if (codeOffsets) {
-          markCellRelationship(codeWidget.node, relationshipNumber, color);
+          markCellRelationship(
+            codeWidget.node,
+            relationshipNumber,
+            color,
+            relationship.reason,
+            'code'
+          );
           highlightedIndexes.add(codeCellIndex);
           const highlights = codeHighlights.get(codeWidget.node) ?? [];
           highlights.push({
+            reason:
+              relationship.reason?.trim() ||
+              'No explanation was saved for this relationship.',
             color,
             from: codeOffsets.start,
             relationshipId: String(relationshipNumber),
@@ -361,7 +412,7 @@ function applyOutputRelationshipHighlights(
   relationshipFile: RelationshipFile,
   relationshipOffset: number,
   renderedPortions: Map<string, string>,
-  relationshipRanges: Map<string, { color: string; ranges: Range[] }>,
+  relationshipRanges: Map<string, IMarkdownRelationshipHighlight>,
   highlightedIndexes: Set<number>
 ): void {
   let relationshipNumber = relationshipOffset;
@@ -416,7 +467,13 @@ function applyOutputRelationshipHighlights(
           relationship.markdownPortion
         )
       );
-      markCellRelationship(markdownWidget.node, relationshipNumber, color);
+      markCellRelationship(
+        markdownWidget.node,
+        relationshipNumber,
+        color,
+        relationship.reason,
+        'output'
+      );
       markMarkdownPortionRelationship(
         markdownWidget.node,
         relationshipNumber,
@@ -433,11 +490,28 @@ function applyOutputRelationshipHighlights(
         );
         relationshipRanges.set(
           `${getPanelHighlightPrefix(panel)}-output-${relationshipNumber}`,
-          { color, ranges: [markdownRange] }
+          {
+            color,
+            kind: 'output',
+            relationshipIds: [String(relationshipNumber)],
+            ranges: [markdownRange]
+          }
         );
       }
-      markCellRelationship(output, relationshipNumber, color);
-      markCellRelationship(targetCell.node, relationshipNumber, color);
+      markCellRelationship(
+        output,
+        relationshipNumber,
+        color,
+        relationship.reason,
+        'output'
+      );
+      markCellRelationship(
+        targetCell.node,
+        relationshipNumber,
+        color,
+        relationship.reason,
+        'output'
+      );
       markdownWidget.node.classList.add('jp-LinkMaker-markdownRelated');
       targetCell.node.classList.add('jp-LinkMaker-codeRelated');
       output.classList.add('jp-LinkMaker-outputRelated');
@@ -447,7 +521,7 @@ function applyOutputRelationshipHighlights(
       output.dataset.linkmakerOutputDescription = description;
       output.dataset.linkmakerOutputRelationshipIds =
         output.dataset.linkmakerRelationshipIds ?? '';
-      output.title = description;
+      output.removeAttribute('title');
       for (const id of target?.tableCellIds ?? []) {
         const box = document.createElement('div');
         box.className = 'jp-LinkMaker-outputBoundingBox';
@@ -459,7 +533,6 @@ function applyOutputRelationshipHighlights(
         );
         box.style.setProperty('--jp-linkmaker-bounding-color', color);
         box.setAttribute('aria-hidden', 'true');
-        box.title = description;
         output.appendChild(box);
       }
       const rectangles =
@@ -479,8 +552,7 @@ function applyOutputRelationshipHighlights(
           output,
           relationshipNumber,
           rectangle,
-          color,
-          description
+          color
         );
       }
       highlightedIndexes.add(markdownIndex);
@@ -603,16 +675,20 @@ function clearRelationshipHighlightsInternal(panel: NotebookPanel): void {
   const registry = getHighlightRegistry();
   activeHighlightNames.get(panel)?.forEach(name => registry?.delete(name));
   activeHighlightNames.delete(panel);
+  markdownHighlightRanges.delete(panel);
   document.getElementById(getPanelStyleId(panel))?.remove();
   panel.content.widgets.forEach(widget => {
     widget.removeClass('jp-LinkMaker-markdownRelated');
     widget.removeClass('jp-LinkMaker-codeRelated');
+    widget.removeClass('jp-LinkMaker-preciseMarkdownLink');
     widget.node.removeAttribute('data-linkmaker-relationship-count');
     widget.node.removeAttribute('data-linkmaker-relationship-highlight');
     widget.node.removeAttribute('data-linkmaker-relationship-ids');
     widget.node.removeAttribute('data-linkmaker-relationship-colors');
     widget.node.removeAttribute('data-linkmaker-markdown-links');
+    widget.node.removeAttribute('data-linkmaker-output-relationship-ids');
     markdownRangeLinks.delete(widget.node);
+    clearRelationshipReasons(widget.node);
     widget.node.removeAttribute('title');
     widget.node.style.removeProperty('background-color');
     widget.node.style.removeProperty('background-image');
@@ -627,6 +703,7 @@ function clearRelationshipHighlightsInternal(panel: NotebookPanel): void {
       output.removeAttribute('data-linkmaker-output-description');
       output.removeAttribute('data-linkmaker-output-relationship-ids');
       output.removeAttribute('title');
+      clearRelationshipReasons(output);
     });
   panel.content.node
     .querySelectorAll<HTMLElement>('.jp-LinkMaker-outputBoundingBox')
@@ -638,8 +715,7 @@ function addOutputBoundingBox(
   output: HTMLElement,
   relationshipNumber: number,
   rectangle: IOutputRectangle,
-  color: string,
-  description: string
+  color: string
 ): void {
   const box = document.createElement('div');
   box.className = 'jp-LinkMaker-outputBoundingBox';
@@ -650,7 +726,6 @@ function addOutputBoundingBox(
   box.dataset.linkmakerBoundingHeight = String(rectangle.height);
   box.style.setProperty('--jp-linkmaker-bounding-color', color);
   box.setAttribute('aria-hidden', 'true');
-  box.title = description;
   output.appendChild(box);
 }
 
@@ -680,7 +755,7 @@ function isOutputRectangle(value: unknown): value is IOutputRectangle {
  */
 function applyTextHighlights(
   panel: NotebookPanel,
-  relationshipRanges: Map<string, { color: string; ranges: Range[] }>
+  relationshipRanges: Map<string, IMarkdownRelationshipHighlight>
 ): void {
   const registry = getHighlightRegistry();
   const HighlightConstructor = getHighlightConstructor();
@@ -690,11 +765,15 @@ function applyTextHighlights(
 
   const rules: string[] = [];
   const panelHighlightNames = new Set<string>();
-  relationshipRanges.forEach(({ color, ranges }, name) => {
+  relationshipRanges.forEach(({ color, kind, ranges }, name) => {
     registry.set(name, new HighlightConstructor(...ranges));
     panelHighlightNames.add(name);
+    const style =
+      kind === 'code'
+        ? `background-color: transparent; text-decoration: underline 3px ${color}; text-underline-offset: 3px;`
+        : `background-color: ${color}66; text-decoration: underline 2px ${color}; text-underline-offset: 3px;`;
     rules.push(
-      `::highlight(${name}) { background-color: ${color}99; color: var(--jp-ui-font-color0); }`
+      `::highlight(${name}) { ${style} color: var(--jp-ui-font-color0); }`
     );
   });
 
@@ -703,6 +782,29 @@ function applyTextHighlights(
   style.textContent = rules.join('\n');
   document.head.appendChild(style);
   activeHighlightNames.set(panel, panelHighlightNames);
+  markdownHighlightRanges.set(panel, relationshipRanges);
+}
+
+/** Show only the clicked Markdown relationship while a precise lookup is pinned. */
+export function setPreciseMarkdownHighlights(
+  panel: NotebookPanel,
+  relationshipIds: string[] | null
+): void {
+  const registry = getHighlightRegistry();
+  const HighlightConstructor = getHighlightConstructor();
+  const ranges = markdownHighlightRanges.get(panel);
+  if (!registry || !HighlightConstructor || !ranges) {
+    return;
+  }
+  ranges.forEach((highlight, name) => {
+    registry.delete(name);
+    if (
+      relationshipIds === null ||
+      highlight.relationshipIds.some(id => relationshipIds.includes(id))
+    ) {
+      registry.set(name, new HighlightConstructor(...highlight.ranges));
+    }
+  });
 }
 
 function getPanelHighlightPrefix(panel: NotebookPanel): string {
@@ -1070,9 +1172,9 @@ function applyCellHighlight(
 ): void {
   node.classList.add(className);
   node.setAttribute('data-linkmaker-relationship-highlight', 'true');
-  node.setAttribute('title', label);
-  node.style.setProperty('background-color', `${color}2e`, 'important');
-  node.style.setProperty('outline', `3px solid ${color}`, 'important');
+  node.setAttribute('aria-label', label);
+  node.style.setProperty('background-color', `${color}14`, 'important');
+  node.style.setProperty('outline', `1px solid ${color}`, 'important');
   node.style.setProperty('outline-offset', '-3px', 'important');
 }
 
@@ -1080,7 +1182,9 @@ function applyCellHighlight(
 function markCellRelationship(
   node: HTMLElement,
   relationshipNumber: number,
-  color: string
+  color: string,
+  reason?: string,
+  kind: 'code' | 'output' = 'code'
 ): void {
   const ids =
     node.dataset.linkmakerRelationshipIds?.split(',').filter(Boolean) ?? [];
@@ -1092,6 +1196,104 @@ function markCellRelationship(
   }
   node.dataset.linkmakerRelationshipIds = ids.join(',');
   node.dataset.linkmakerRelationshipColors = colors.join(',');
+  const reasons = relationshipReasons.get(node) ?? new Map<string, string>();
+  reasons.set(
+    relationshipId,
+    reason?.trim() || 'No explanation was saved for this relationship.'
+  );
+  relationshipReasons.set(node, reasons);
+  const kinds = relationshipKinds.get(node) ?? new Map();
+  kinds.set(relationshipId, kind);
+  relationshipKinds.set(node, kinds);
+  if (kind === 'output') {
+    const outputRelationshipIds =
+      node.dataset.linkmakerOutputRelationshipIds
+        ?.split(',')
+        .filter(Boolean) ?? [];
+    if (!outputRelationshipIds.includes(relationshipId)) {
+      outputRelationshipIds.push(relationshipId);
+    }
+    node.dataset.linkmakerOutputRelationshipIds =
+      outputRelationshipIds.join(',');
+  }
+  const relationshipColorsForNode =
+    relationshipColors.get(node) ?? new Map<string, string>();
+  relationshipColorsForNode.set(relationshipId, color);
+  relationshipColors.set(node, relationshipColorsForNode);
+  node.removeAttribute('title');
+  if (!reasonHoverHandlers.has(node)) {
+    const dispose = attachRelationshipTooltip(node, event => {
+      const codeMark =
+        event.target instanceof Element
+          ? event.target.closest<HTMLElement>(
+              '[data-linkmaker-code-relationship]'
+            )
+          : null;
+      const codeId = codeMark?.dataset.linkmakerCodeRelationship;
+      const boundingBox =
+        event.target instanceof Element
+          ? event.target.closest<HTMLElement>(
+              '.jp-LinkMaker-outputBoundingBox'
+            )
+          : null;
+      const boundingId =
+        boundingBox?.dataset.linkmakerBoundingRelationshipId;
+      const target =
+        event instanceof PointerEvent
+          ? getRenderedMarkdownRelationshipTargetAtPoint(
+              node,
+              event.clientX,
+              event.clientY
+            )
+          : null;
+      if (boundingId) {
+        return getRelationshipTooltipContent(node, [boundingId], true);
+      }
+      return getRelationshipTooltipContent(
+        node,
+        codeId ? [codeId] : target?.relationshipIds
+      );
+    });
+    reasonHoverHandlers.set(node, dispose);
+  }
+}
+
+/** Show saved explanations for the exact Markdown portion, or the whole cell. */
+function getRelationshipTooltipContent(
+  node: HTMLElement,
+  ids?: string[],
+  onlyActive = false
+): IRelationshipTooltipContent {
+  const reasons = relationshipReasons.get(node);
+  if (!reasons) {
+    return { activeIds: [], entries: [] };
+  }
+  const kinds = relationshipKinds.get(node) ?? new Map();
+  const colors = relationshipColors.get(node) ?? new Map();
+  const activeIds = ids ?? [];
+  return {
+    activeIds,
+    entries: [...reasons]
+      .filter(([id]) => !onlyActive || activeIds.includes(id))
+      .map(([id, text]) => ({
+        color: colors.get(id) ?? 'var(--jp-brand-color1)',
+        id,
+        kind: kinds.get(id) ?? 'code',
+        text
+      }))
+  };
+}
+
+/** Release hover listeners and explanations when relationships are refreshed. */
+function clearRelationshipReasons(node: HTMLElement): void {
+  const handler = reasonHoverHandlers.get(node);
+  if (handler) {
+    handler();
+  }
+  reasonHoverHandlers.delete(node);
+  relationshipReasons.delete(node);
+  relationshipKinds.delete(node);
+  relationshipColors.delete(node);
 }
 
 /** Store JSON offsets so pointer selection can target one Markdown portion. */

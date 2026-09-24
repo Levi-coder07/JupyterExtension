@@ -19,7 +19,10 @@ for the frontend extension.
 Use **Analyze Markdown ↔ outputs** in the Notebook Inspector to analyze
 references to rendered charts and HTML tables separately from Markdown-to-code
 relationships. Chart outputs are captured from rendered SVG, canvas, or image
-elements; tables are captured as HTML and text. Results are stored alongside the
+elements; tables are captured as HTML and text. Each output also includes its
+producing cell's current source code as interpretation context, matched by cell
+ID and index. The model still grounds relationships and regions in the captured
+output, since saved outputs can predate edits to the code. Results are stored alongside the
 existing code relationships in the same `.linkmaker.json` file under
 `markdownOutputAnalyses`, without replacing `markdownAnalyses`. Set
 `LINKMAKER_OPENAI_OUTPUT_MODEL` to select the output-analysis model; it defaults
@@ -79,9 +82,20 @@ relationships are saved.
 Each notebook header has a **Two-column layout** button. It changes the active
 notebook itself: Markdown cells appear on the left and code cells with their
 outputs appear on the right. Select **Default layout** to restore JupyterLab's
-normal single-column notebook view. Click a colored Markdown portion to show
-only its linked code cells and align the first linked cell with that portion's
-rendered line.
+normal single-column notebook view. Hover a colored Markdown portion to bring
+its linked code or output alongside it. Hover a linked code cell to bring its
+first related Markdown cell alongside it and highlight the related Markdown.
+Only the opposite column moves, keeping the hovered cell stationary. Click a
+colored Markdown portion to pin its links; press Escape to restore the layout.
+Highlights respond immediately; column alignment starts after a 120 ms hover and slides into place over 160 ms
+(respecting reduced-motion preferences).
+Unrelated cells are subtly blurred and dimmed to emphasize the active relationship,
+with a 300 ms grace period when crossing
+between linked cells. Pause over or keyboard-focus a linked cell to open its
+“Why linked” explanation card. The card stays open while hovered, supports text
+selection, and closes with Escape. Markdown portions and code spans show their
+matching reasons; output cells expose their saved explanations too. No
+additional model request is needed.
 
 ## Install
 

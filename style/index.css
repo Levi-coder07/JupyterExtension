@@ -3,8 +3,7 @@
 .jp-LinkMaker-panel {
   height: 100%;
   min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden auto;
 }
 
 .jp-LinkMaker-panelBody {
@@ -171,8 +170,7 @@
   background: var(--jp-layout-color2);
   border-radius: 8px;
   margin: 0;
-  overflow-x: auto;
-  overflow-y: auto;
+  overflow: auto;
   padding: 10px;
   max-height: 320px;
   white-space: pre-wrap;
@@ -189,16 +187,13 @@
 }
 
 .jp-Notebook .jp-Cell.jp-LinkMaker-codeRelated {
-  background-color: rgb(33 150 243 / 18%) !important;
-  border-left: 5px solid #2196f3 !important;
-  box-shadow: inset 0 0 0 2px rgb(33 150 243 / 65%) !important;
+  background-color: rgb(33 150 243 / 6%) !important;
+  border-left: 2px solid #2196f3 !important;
+  box-shadow: inset 0 0 0 1px rgb(33 150 243 / 25%) !important;
 }
 
 .jp-Notebook .jp-OutputArea-child.jp-LinkMaker-outputRelated {
-  box-shadow:
-    inset 0 0 0 3px var(--jp-linkmaker-output-color),
-    0 0 10px
-      color-mix(in srgb, var(--jp-linkmaker-output-color) 35%, transparent);
+  box-shadow: inset 0 0 0 1px var(--jp-linkmaker-output-color);
   position: relative;
 }
 
@@ -222,22 +217,21 @@
 
 .jp-Notebook .jp-Cell.jp-LinkMaker-pinnedMarkdownLink {
   cursor: default;
+  outline: 2px solid var(--jp-linkmaker-active-color);
+  outline-offset: -2px;
 }
 
 .jp-Notebook .jp-Cell.jp-LinkMaker-outputHostFocused .jp-InputArea,
 .jp-Notebook
   .jp-Cell.jp-LinkMaker-outputHostFocused
   .jp-OutputArea-child:not(.jp-LinkMaker-hoverLinkedOutput) {
-  filter: blur(1px) saturate(0.35);
-  opacity: 0.34;
+  filter: blur(0.7px) saturate(0.6);
+  opacity: 0.6;
 }
 
 .jp-Notebook .jp-OutputArea-child.jp-LinkMaker-hoverLinkedOutput {
   background: var(--jp-layout-color1);
-  box-shadow:
-    inset 0 0 0 3px var(--jp-linkmaker-active-color),
-    0 0 12px
-      color-mix(in srgb, var(--jp-linkmaker-active-color) 42%, transparent);
+  box-shadow: inset 0 0 0 2px var(--jp-linkmaker-active-color);
   position: relative;
   transform: translateY(var(--jp-linkmaker-output-translate-y));
   transition: transform 160ms ease-out;
@@ -252,11 +246,10 @@
   );
   border: 3px solid var(--jp-linkmaker-bounding-color);
   border-radius: 4px;
-  box-shadow: 0 0 0 3px
-    color-mix(in srgb, var(--jp-linkmaker-bounding-color) 22%, transparent);
+  box-shadow: none;
   box-sizing: border-box;
   display: none;
-  pointer-events: none;
+  pointer-events: auto;
   position: absolute;
   z-index: 6;
 }
@@ -264,6 +257,7 @@
 .jp-Notebook
   .jp-LinkMaker-outputBoundingBox.jp-LinkMaker-outputBoundingBoxActive {
   display: block;
+    cursor: default;
 }
 
 .jp-Notebook .jp-LinkMaker-codeRelated::before {
@@ -295,6 +289,7 @@
 
 .jp-LinkMaker-twoColumnNotebook .jp-WindowedPanel-viewport {
   display: block;
+  overflow-anchor: none;
   position: relative;
 }
 
@@ -309,11 +304,16 @@
 .jp-LinkMaker-codeColumn {
   position: absolute;
   top: 0;
-  transition: top 120ms ease-out;
+  transition: top 160ms ease-out;
+}
+
+.jp-LinkMaker-markdownColumn {
+  transition: transform 160ms ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .jp-LinkMaker-codeColumn {
+  .jp-LinkMaker-codeColumn,
+  .jp-LinkMaker-markdownColumn {
     transition: none;
   }
 
@@ -322,22 +322,42 @@
   }
 }
 
-.jp-Notebook .jp-Cell.jp-LinkMaker-hoverLinkedCode {
+.jp-Notebook .jp-Cell.jp-LinkMaker-hoverLinkedCode,
+.jp-Notebook .jp-Cell.jp-LinkMaker-hoverLinkedMarkdown {
   background-color: color-mix(
     in srgb,
-    var(--jp-linkmaker-active-color) 16%,
+    var(--jp-linkmaker-active-color) 8%,
     transparent
+  ) !important;
+  box-shadow: inset 0 0 0 2px var(--jp-linkmaker-active-color);
+}
+
+.jp-Notebook .jp-Cell.jp-LinkMaker-preciseMarkdownLink {
+  background: color-mix(
+    in srgb,
+    var(--jp-linkmaker-active-color) 10%,
+    var(--jp-layout-color1)
   ) !important;
   box-shadow:
     inset 0 0 0 3px var(--jp-linkmaker-active-color),
-    0 0 12px
-      color-mix(in srgb, var(--jp-linkmaker-active-color) 42%, transparent);
-  order: 0;
+    inset 6px 0 0 var(--jp-linkmaker-active-color) !important;
+  outline: 2px solid var(--jp-linkmaker-active-color);
+  outline-offset: 3px;
+}
+
+.jp-Notebook .jp-Cell.jp-LinkMaker-preciseMarkdownLink .jp-MarkdownOutput {
+  background: color-mix(
+    in srgb,
+    var(--jp-linkmaker-active-color) 8%,
+    transparent
+  );
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px var(--jp-linkmaker-active-color);
 }
 
 .jp-LinkMaker-focusDimmed {
-  filter: blur(1px) saturate(0.35);
-  opacity: 0.34;
+  filter: blur(0.7px) saturate(0.6);
+  opacity: 0.6;
   transition:
     filter 160ms ease,
     opacity 160ms ease;
@@ -366,7 +386,7 @@
   display: none !important;
 }
 
-.jp-LinkMaker-codeColumn
+.jp-LinkMaker-codeColumnPinned
   > .jp-Notebook-cell:not(.jp-LinkMaker-hoverLinkedCode) {
   order: 2;
 }
@@ -407,4 +427,71 @@
 ::highlight(linkmaker-code) {
   background-color: rgb(33 150 243 / 55%);
   color: var(--jp-ui-font-color0);
+}
+
+.jp-LinkMaker-reasonCard {
+  position: fixed;
+  z-index: 10000;
+  box-sizing: border-box;
+  width: 340px;
+  max-width: calc(100vw - 16px);
+  max-height: min(360px, calc(100vh - 16px));
+  overflow: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--jp-border-color2);
+  border-radius: 8px;
+  background: var(--jp-layout-color1);
+  color: var(--jp-ui-font-color0);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 16%);
+  font-family: var(--jp-ui-font-family);
+  font-size: var(--jp-ui-font-size1);
+  line-height: 1.5;
+}
+
+.jp-LinkMaker-reasonCard strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.jp-LinkMaker-reasonCard > div {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.jp-LinkMaker-reasonEntry {
+  margin-top: 8px;
+  transition:
+    filter 120ms ease,
+    opacity 120ms ease,
+    font-size 120ms ease;
+}
+
+.jp-LinkMaker-reasonEntry:first-child {
+  margin-top: 0;
+}
+
+.jp-LinkMaker-reasonCard[data-linkmaker-has-active='true']
+  .jp-LinkMaker-reasonEntry:not(.jp-LinkMaker-reasonEntryActive) {
+  filter: blur(0.7px);
+  opacity: 0.42;
+}
+
+.jp-LinkMaker-reasonEntry.jp-LinkMaker-reasonEntryActive {
+  font-size: 1.05em;
+  font-weight: 600;
+  padding-bottom: 4px;
+  text-decoration: underline 2px var(--jp-linkmaker-reason-color);
+  text-underline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jp-LinkMaker-reasonEntry {
+    transition: none;
+  }
+}
+
+.jp-Notebook [data-linkmaker-relationship-ids]:focus-visible {
+  outline: 2px solid var(--jp-brand-color1);
+  outline-offset: -2px;
 }

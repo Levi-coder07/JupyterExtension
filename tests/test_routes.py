@@ -116,6 +116,29 @@ class ExecutionOutputContextTests(unittest.TestCase):
         self.assertEqual(text, "x" * 20_000 + "\n[Output text truncated]")
 
 
+class OutputCodeContextTests(unittest.TestCase):
+    def test_output_prompt_contains_only_matching_notebook_source(self):
+        _, code = routes._extract_notebook_cells({"cells": [
+            {"cell_type": "code", "id": "plot", "source": ["plt.hist(values)", "\n"]},
+            {"cell_type": "code", "id": "other", "source": "unrelated()"},
+        ]})
+        artifact = {
+            "outputId": "plot:0", "cellId": "plot", "cellIndex": 0,
+            "outputIndex": 0, "kind": "image", "mimeType": "image/png",
+            "content": "data:image/png;base64,abc", "producingCode": "wrong()",
+        }
+        artifacts = routes._validate_output_artifacts([artifact], code)
+        prompt = routes._build_output_relationship_prompt([], artifacts)
+        metadata = json.loads(prompt.split("IMAGE OUTPUT METADATA\n")[1].split("\n\nTABLE OUTPUTS")[0])
+        self.assertEqual(metadata[0]["producingCode"], "plt.hist(values)\n")
+        self.assertNotIn("unrelated()", prompt)
+        self.assertNotIn("wrong()", prompt)
+        for changes in ({"cellId": "missing"}, {"cellIndex": 1}):
+            result = routes._validate_output_artifacts([{**artifact, **changes}], code)
+            self.assertNotIn("producingCode", result[0])
+        self.assertNotIn("producingCode", routes._validate_output_artifacts([artifact])[0])
+
+
 class DummyHandler:
     def __init__(self, contents_manager):
         self.contents_manager = contents_manager
@@ -697,6 +720,58 @@ class SaveMediaRouteTests(unittest.TestCase):
                 )
             self.assertEqual(result[0]["relationships"], [])
             self.assertIn(rejection, logs.output[0])
+
+    def test_output_materialization_recovers_unique_text_from_wrong_known_cell(self):
+        markdown = [
+            {"id": "cell-13", "index": 13, "metadata": {}, "source": "Other claim."},
+            {"id": "cell-23", "index": 23, "metadata": {},
+             "source": "- Most passengers are in 15-35 age range."},
+        ]
+        artifacts = [{"outputId": "plot:1", "cellId": "plot", "cellIndex": 24,
+                      "outputIndex": 1, "kind": "image"}]
+        relationship = {
+            "markdownCellId": "cell-13", "markdownCellIndex": 13,
+            "markdownText": markdown[1]["source"], "outputId": "plot:1",
+            "outputCellId": "plot", "outputCellIndex": 24, "outputIndex": 1,
+            "componentDescription": "Age bins 15-35", "componentType": "bar_group",
+            "rectangles": [{"x": 90, "y": 120, "width": 360, "height": 360}],
+            "confidence": 0.8, "reason": "The histogram shows the age range.",
+        }
+
+        with self.assertLogs(routes.LOGGER, level="WARNING") as logs:
+            result = routes._materialize_output_relationships(
+                markdown, artifacts, [relationship]
+            )
+
+        self.assertEqual(result[0]["relationships"], [])
+        self.assertEqual(len(result[1]["relationships"]), 1)
+        self.assertIn("corrected Markdown identity from unique text", logs.output[0])
+
+    def test_output_materialization_keeps_valid_rectangles_when_one_is_invalid(self):
+        markdown = [{"id": "markdown-a", "index": 0, "metadata": {},
+                     "source": "The chart shows two regions."}]
+        artifacts = [{"outputId": "plot:0", "cellId": "plot", "cellIndex": 1,
+                      "outputIndex": 0, "kind": "image"}]
+        relationship = {
+            "markdownCellId": "markdown-a", "markdownCellIndex": 0,
+            "markdownText": markdown[0]["source"], "outputId": "plot:0",
+            "outputCellId": "plot", "outputCellIndex": 1, "outputIndex": 0,
+            "componentDescription": "two chart regions", "componentType": "line_segment",
+            "rectangles": [
+                {"x": 223, "y": 950, "width": 455, "height": 184},
+                {"x": 224, "y": 114, "width": 454, "height": 102},
+            ],
+            "confidence": 0.8, "reason": "The chart shows both regions.",
+        }
+
+        with self.assertLogs(routes.LOGGER, level="WARNING") as logs:
+            result = routes._materialize_output_relationships(
+                markdown, artifacts, [relationship]
+            )
+
+        saved = result[0]["relationships"][0]["outputTarget"]["rectangles"]
+        self.assertEqual(saved, [relationship["rectangles"][1]])
+        self.assertIn("dropped invalid output rectangles", logs.output[0])
 
     def test_output_analysis_sends_images_and_html_with_valid_input_types(self):
         markdown_cells = [{

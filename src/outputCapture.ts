@@ -90,8 +90,11 @@ function captureImage(element: Element): {
   mimeType: string;
 } | null {
   if (element instanceof SVGElement) {
-    const svg = new XMLSerializer().serializeToString(element);
     const bounds = element.getBoundingClientRect();
+    const clone = element.cloneNode(true) as SVGElement;
+    clone.setAttribute('width', `${Math.max(1, Math.round(bounds.width))}`);
+    clone.setAttribute('height', `${Math.max(1, Math.round(bounds.height))}`);
+    const svg = new XMLSerializer().serializeToString(clone);
     return {
       content: `data:image/svg+xml;base64,${encodeBase64(svg)}`,
       imageHeight: Math.max(1, Math.round(bounds.height)),
@@ -185,3 +188,4 @@ function encodeBase64(value: string): string {
   });
   return btoa(binary);
 }
+

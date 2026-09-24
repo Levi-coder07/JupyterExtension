@@ -8,7 +8,10 @@ import {
 import { DisposableDelegate, IDisposable } from '@lumino/disposable';
 import { Widget } from '@lumino/widgets';
 
-import { getRenderedMarkdownRelationshipTargetAtPoint } from './relationshipVisualizer';
+import {
+  getRenderedMarkdownRelationshipTargetAtPoint,
+  setPreciseMarkdownHighlights
+} from './relationshipVisualizer';
 import { captureTableCells } from './tableCells';
 
 interface ILayoutState {
@@ -33,6 +36,8 @@ interface ILayoutState {
   activeFocusKey: string | null;
   activeAnchorTop: number | null;
   pinnedFocusKey: string | null;
+  hoverTimer: number | null;
+  hoverOrigin: 'code' | 'markdown' | null;
 }
 
 interface IMarkdownFocusHandlers {
@@ -119,7 +124,9 @@ export function toggleTwoColumnLayout(panel: NotebookPanel): boolean {
     unrelatedVisible: false,
     activeFocusKey: null,
     activeAnchorTop: null,
-    pinnedFocusKey: null
+    pinnedFocusKey: null,
+    hoverTimer: null,
+    hoverOrigin: null
   };
   state.unrelatedToggleHandler = () => toggleUnrelatedCodeCells(panel, state);
   state.viewportPointerLeaveHandler = () => scheduleFocusReset(panel, state);
@@ -229,23 +236,34 @@ function addCodeExpandHandler(
     }
   };
   const pointerEnter: EventListener = () => {
+    if (isColumnAnimating(state.codeColumn)) {
+      return;
+    }
     cancelFocusReset(state);
     if (state.pinnedFocusKey !== null) {
       return;
     }
     const relationshipIds = getRelationshipIds(cellNode);
+    if (
+      state.activeFocusKey !== null &&
+      state.activeFocusKey.split(',').some(id => relationshipIds.includes(id))
+    ) {
+      return;
+    }
     if (relationshipIds.length === 0) {
       resetCodeAccordionState(panel, state);
       return;
     }
-    const anchorClientTop = getRelationshipAnchorTop(
-      panel,
-      relationshipIds,
-      cellNode.getBoundingClientRect().top
-    );
+    state.hoverOrigin = 'code';
+    const anchorClientTop = cellNode.getBoundingClientRect().top;
     setCodeAccordionState(panel, state, relationshipIds, anchorClientTop);
+    scheduleColumnAlignment(panel, state, relationshipIds, anchorClientTop);
   };
-  const pointerLeave: EventListener = () => scheduleFocusReset(panel, state);
+  const pointerLeave: EventListener = () => {
+    if (!isColumnAnimating(cellNode.parentElement)) {
+      scheduleFocusReset(panel, state);
+    }
+  };
   cellNode.addEventListener('click', click, true);
   cellNode.addEventListener('pointerenter', pointerEnter);
   cellNode.addEventListener('pointerleave', pointerLeave);
@@ -270,12 +288,18 @@ function addMarkdownFocusHandlers(
     if (relationshipIds.length === 0) {
       return;
     }
+    // Crossing to the revealed Markdown must not move that new hover target.
+    if (
+      !force &&
+      state.hoverOrigin === 'code' &&
+      state.activeFocusKey?.split(',').some(id => relationshipIds.includes(id))
+    ) {
+      return;
+    }
     const focusKey = [...relationshipIds].sort().join(',');
     if (
       state.activeMarkdownCell === cellNode &&
       state.activeFocusKey === focusKey &&
-      state.activeAnchorTop !== null &&
-      Math.abs(state.activeAnchorTop - anchorClientTop) < 1 &&
       !force
     ) {
       return;
@@ -293,8 +317,15 @@ function addMarkdownFocusHandlers(
       state.pinnedFocusKey === focusKey
     );
     setCodeAccordionState(panel, state, relationshipIds, anchorClientTop);
+    if (state.pinnedFocusKey === null) {
+      state.hoverOrigin = 'markdown';
+      scheduleColumnAlignment(panel, state, relationshipIds, anchorClientTop);
+    }
   };
   const pointerEnter: EventListener = () => {
+    if (isColumnAnimating(state.markdownColumn)) {
+      return;
+    }
     if (state.pinnedFocusKey !== null) {
       cancelFocusReset(state);
       return;
@@ -306,8 +337,15 @@ function addMarkdownFocusHandlers(
     }
     focus(relationshipIds);
   };
-  const pointerLeave: EventListener = () => scheduleFocusReset(panel, state);
+  const pointerLeave: EventListener = () => {
+    if (!isColumnAnimating(cellNode.parentElement)) {
+      scheduleFocusReset(panel, state);
+    }
+  };
   const pointerMove: EventListener = event => {
+    if (isColumnAnimating(state.markdownColumn)) {
+      return;
+    }
     if (state.pinnedFocusKey !== null) {
       return;
     }
@@ -324,6 +362,7 @@ function addMarkdownFocusHandlers(
         resetCodeAccordionState(panel, state);
         return;
       }
+      cancelColumnAlignment(state);
       state.pinnedFocusKey = focusKey;
       focus(target.relationshipIds, target.anchorClientTop, true);
       return;
@@ -353,13 +392,15 @@ function setCodeAccordionState(
   anchorClientTop: number
 ): void {
   const unrelatedCodeCells: HTMLElement[] = [];
+  const pinned = state.pinnedFocusKey !== null;
+  setPreciseMarkdownHighlights(panel, pinned ? relationshipIds : null);
+  state.codeColumn.classList.toggle('jp-LinkMaker-codeColumnPinned', pinned);
+  state.activeFocusKey = [...relationshipIds].sort().join(',');
   const hasLinkedCodeCell = panel.content.widgets.some(
     cell =>
       cell.model.type !== 'markdown' &&
       hasSharedRelationship(cell.node, relationshipIds)
   );
-  state.codeColumn.style.top = '0px';
-  state.codeColumn.scrollTop = 0;
   panel.content.widgets.forEach(cell => {
     const sharedColor = getSharedRelationshipColor(cell.node, relationshipIds);
     const linked =
@@ -368,6 +409,16 @@ function setCodeAccordionState(
     if (cell.model.type === 'markdown') {
       cell.node.classList.toggle('jp-LinkMaker-focusDimmed', !linked);
       cell.node.classList.toggle('jp-LinkMaker-hoverLinkedMarkdown', linked);
+      const outputRelationshipIds =
+        cell.node.dataset.linkmakerOutputRelationshipIds
+          ?.split(',')
+          .filter(Boolean) ?? [];
+      cell.node.classList.toggle(
+        'jp-LinkMaker-preciseMarkdownLink',
+        pinned &&
+          linked &&
+          relationshipIds.some(id => outputRelationshipIds.includes(id))
+      );
       if (linked) {
         cell.node.style.setProperty('--jp-linkmaker-active-color', sharedColor);
       } else {
@@ -418,7 +469,9 @@ function setCodeAccordionState(
   state.unrelatedCodeCells = unrelatedCodeCells;
   state.unrelatedVisible = true;
   updateUnrelatedToggle(state);
-  if (hasLinkedCodeCell) {
+  // Moving a hovered cell triggers new pointer boundary events. Keep hover
+  // geometry stable and only group and align cells after explicit pinning.
+  if (pinned && hasLinkedCodeCell) {
     const viewportTop = panel.content.viewportNode.getBoundingClientRect().top;
     const outputAnchor = getOutputAnchor(panel, relationshipIds, state);
     const anchorTop = outputAnchor
@@ -427,13 +480,91 @@ function setCodeAccordionState(
     state.codeColumn.style.top = `${Math.max(0, anchorTop)}px`;
   }
   requestAnimationFrame(() => refreshActiveOutputBoundingBoxes(panel, state));
-  state.codeColumn.scrollTop = 0;
-  requestAnimationFrame(() => updateViewportHeight(panel, state));
+  if (pinned) {
+    state.codeColumn.scrollTop = 0;
+    requestAnimationFrame(() => updateViewportHeight(panel, state));
+  }
 }
 
 interface ILinkedOutput {
   color: string;
   node: HTMLElement;
+}
+
+/** Ignore boundary events generated by the opposite column sliding under the pointer. */
+function isColumnAnimating(column: HTMLElement | null): boolean {
+  return (
+    column
+      ?.getAnimations()
+      .some(animation => animation.playState === 'running') ?? false
+  );
+}
+
+/** Delay column movement until the user intentionally rests on a relationship. */
+function scheduleColumnAlignment(
+  panel: NotebookPanel,
+  state: ILayoutState,
+  relationshipIds: string[],
+  anchorClientTop: number
+): void {
+  cancelColumnAlignment(state);
+  state.hoverTimer = window.setTimeout(() => {
+    state.hoverTimer = null;
+    if (!panel.isDisposed && state.pinnedFocusKey === null) {
+      alignOppositeColumn(panel, state, relationshipIds, anchorClientTop);
+    }
+  }, 120);
+}
+
+/** Cancel a pending preview when leaving, pinning, or restoring the layout. */
+function cancelColumnAlignment(state: ILayoutState): void {
+  if (state.hoverTimer !== null) {
+    window.clearTimeout(state.hoverTimer);
+    state.hoverTimer = null;
+  }
+}
+
+/** Reveal the opposite column without moving the pointer's source column. */
+function alignOppositeColumn(
+  panel: NotebookPanel,
+  state: ILayoutState,
+  relationshipIds: string[],
+  anchorClientTop: number
+): void {
+  const targetType = state.hoverOrigin === 'code' ? 'markdown' : 'code';
+  const target = panel.content.widgets.find(
+    cell =>
+      cell.model.type === targetType &&
+      hasSharedRelationship(cell.node, relationshipIds)
+  );
+  if (!target) {
+    return;
+  }
+  const column =
+    targetType === 'markdown' ? state.markdownColumn : state.codeColumn;
+  const targetNode =
+    targetType === 'code'
+      ? (getLinkedOutputs(target.node, relationshipIds)[0]?.node ?? target.node)
+      : target.node;
+  const offset =
+    targetNode.getBoundingClientRect().top - column.getBoundingClientRect().top;
+  const viewportTop = panel.content.viewportNode.getBoundingClientRect().top;
+  const top = anchorClientTop - viewportTop - offset;
+  if (targetType === 'markdown') {
+    column.style.transform = `translateY(${top}px)`;
+  } else {
+    column.style.top = `${top}px`;
+  }
+  // Grow the scroll area if necessary, but never shrink it during hover:
+  // clamping the notebook scroll position would move the source cell.
+  const viewport = panel.content.viewportNode;
+  viewport.style.minHeight = `${Math.max(
+    parseFloat(viewport.style.minHeight) || 0,
+    top + column.scrollHeight,
+    state.markdownColumn.scrollHeight,
+    state.codeColumn.offsetTop + state.codeColumn.scrollHeight
+  )}px`;
+  refreshActiveOutputBoundingBoxes(panel, state);
 }
 
 interface IOutputAnchor {
@@ -597,22 +728,9 @@ function readBoundingCoordinate(
   return Number.isFinite(value) ? value : null;
 }
 
-/** Return the top position of a Markdown cell connected to a code relationship. */
-function getRelationshipAnchorTop(
-  panel: NotebookPanel,
-  relationshipIds: string[],
-  fallbackTop: number
-): number {
-  const markdownCell = panel.content.widgets.find(
-    cell =>
-      cell.model.type === 'markdown' &&
-      hasSharedRelationship(cell.node, relationshipIds)
-  );
-  return markdownCell?.node.getBoundingClientRect().top ?? fallbackTop;
-}
-
 /** Delay reset briefly so the pointer can move between connected cells. */
 function scheduleFocusReset(panel: NotebookPanel, state: ILayoutState): void {
+  cancelColumnAlignment(state);
   if (state.pinnedFocusKey !== null) {
     return;
   }
@@ -620,7 +738,7 @@ function scheduleFocusReset(panel: NotebookPanel, state: ILayoutState): void {
   state.focusResetTimer = window.setTimeout(() => {
     state.focusResetTimer = null;
     resetCodeAccordionState(panel, state);
-  }, 90);
+  }, 300);
 }
 
 /** Keep focus active while the pointer enters another relevant cell. */
@@ -669,7 +787,7 @@ function showCodeCell(cellNode: HTMLElement): void {
 /** Synchronize the unrelated-code accordion control. */
 function updateUnrelatedToggle(state: ILayoutState): void {
   const count = state.unrelatedCodeCells.length;
-  state.unrelatedToggle.hidden = count === 0;
+  state.unrelatedToggle.hidden = count === 0 || state.pinnedFocusKey === null;
   state.unrelatedToggle.setAttribute(
     'aria-expanded',
     String(state.unrelatedVisible)
@@ -703,6 +821,10 @@ function resetCodeAccordionState(
   state.activeFocusKey = null;
   state.activeAnchorTop = null;
   state.pinnedFocusKey = null;
+  setPreciseMarkdownHighlights(panel, null);
+  cancelColumnAlignment(state);
+  state.hoverOrigin = null;
+  state.markdownColumn.style.removeProperty('transform');
   panel.content.widgets.forEach(cell => {
     cell.node.classList.remove(
       'jp-LinkMaker-codeCollapsed',
@@ -731,9 +853,11 @@ function resetCodeAccordionState(
   });
   state.codeColumn.scrollTop = 0;
   state.codeColumn.style.top = '0px';
+  state.codeColumn.classList.remove('jp-LinkMaker-codeColumnPinned');
   state.unrelatedCodeCells = [];
   state.unrelatedVisible = false;
   state.unrelatedToggle.hidden = true;
+  updateViewportHeight(panel, state);
 }
 
 /** Read relationship IDs that the highlighter stored on a notebook cell. */
