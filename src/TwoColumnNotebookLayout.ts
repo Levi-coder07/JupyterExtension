@@ -9,6 +9,7 @@ import { DisposableDelegate, IDisposable } from '@lumino/disposable';
 import { Widget } from '@lumino/widgets';
 
 import { getRenderedMarkdownRelationshipTargetAtPoint } from './relationshipVisualizer';
+import { captureTableCells } from './tableCells';
 
 interface ILayoutState {
   notebookConfig: StaticNotebook.INotebookConfig;
@@ -503,6 +504,30 @@ function updateOutputBoundingBoxes(
         return;
       }
       const x = readBoundingCoordinate(box, 'linkmakerBoundingX');
+      const tableCellId = box.dataset.linkmakerTableCellId;
+      if (tableCellId) {
+        const table = output.querySelector('table');
+        const match = /^r(\d+)c(\d+)$/.exec(tableCellId);
+        const cell =
+          table && match
+            ? table.rows[Number(match[1])]?.cells[Number(match[2])]
+            : undefined;
+        if (
+          !table ||
+          !cell ||
+          JSON.stringify(captureTableCells(table)) !==
+            box.dataset.linkmakerTableSnapshot
+        ) {
+          box.classList.remove('jp-LinkMaker-outputBoundingBoxActive');
+          return;
+        }
+        const bounds = cell.getBoundingClientRect();
+        box.style.left = `${bounds.left - outputRect.left + output.scrollLeft}px`;
+        box.style.top = `${bounds.top - outputRect.top + output.scrollTop}px`;
+        box.style.width = `${bounds.width}px`;
+        box.style.height = `${bounds.height}px`;
+        return;
+      }
       const y = readBoundingCoordinate(box, 'linkmakerBoundingY');
       const width = readBoundingCoordinate(box, 'linkmakerBoundingWidth');
       const height = readBoundingCoordinate(box, 'linkmakerBoundingHeight');
@@ -515,7 +540,7 @@ function updateOutputBoundingBoxes(
         output.scrollLeft +
         (x / 1000) * visualRect.width
       }px`;
-      const top = 1000 - y - height;
+      const top = y;
       box.style.top = `${
         visualRect.top -
         outputRect.top +

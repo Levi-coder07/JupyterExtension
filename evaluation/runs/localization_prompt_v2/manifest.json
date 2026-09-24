@@ -1,0 +1,49 @@
+{
+  "capturedAt": "2026-09-24T03:39:23.924087+00:00",
+  "status": "awaiting fresh model run and independently labeled regions",
+  "notebookSha256": "ec4b691bad5924fa258ad48c9225dd6ccc0ee20c34569fc753bf84b4d53fc904",
+  "savedResultSha256": "9bd758f4560a45331a0f04ab79e4ede46df9a9e199874e6fb2ed928409ab5e63",
+  "candidatePromptSha256": "438234a1c6a205a35a170887c8bb2fb31b5465c65e9cbb3edc214c43069d82c3",
+  "candidateModelDefault": "gpt-5-mini",
+  "reasoningEffort": "low",
+  "baselineProvenance": "Existing saved file; generating prompt and runtime configuration unrecorded. Not a controlled old-prompt run.",
+  "savedResultGeometry": [
+    {
+      "markdownText": "- Most passengers are in 15-35 age range.",
+      "outputId": "d58e9eb7-9775-41d4-ba39-2518e81b6cf4:1",
+      "rectangles": [
+        {
+          "x": 47,
+          "y": 64,
+          "width": 432,
+          "height": 865
+        }
+      ],
+      "boxAreaFractions": [
+        0.37368
+      ],
+      "description": "Histogram region showing tallest bars in the ~15\u201335 age range (both panels)."
+    },
+    {
+      "markdownText": "- Oldest passengers (Age = 80) survived.",
+      "outputId": "d58e9eb7-9775-41d4-ba39-2518e81b6cf4:1",
+      "rectangles": [
+        {
+          "x": 519,
+          "y": 64,
+          "width": 440,
+          "height": 865
+        }
+      ],
+      "boxAreaFractions": [
+        0.3806
+      ],
+      "description": "Right histogram panel far-right small spike (age ~80)."
+    }
+  ],
+  "limitations": [
+    "No API key available for fresh model inference.",
+    "No human-labeled target boxes available for IoU scoring.",
+    "Archived prompt has empty input sections; it records instructions, not a complete request."
+  ]
+}

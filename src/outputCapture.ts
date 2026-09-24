@@ -2,6 +2,7 @@ import { CodeCell } from '@jupyterlab/cells';
 import { NotebookPanel } from '@jupyterlab/notebook';
 
 import { OutputArtifact } from './api';
+import { captureTableCells } from './tableCells';
 
 const MAX_ARTIFACT_BYTES = 4_000_000;
 const MAX_VISION_IMAGE_DIMENSION = 1600;
@@ -73,6 +74,7 @@ function captureOutputArtifact(
     cellIndex,
     content,
     kind: 'table',
+    tableCells: captureTableCells(table),
     mimeType: 'text/html',
     outputIndex,
     outputId: `${cellId}:${outputIndex}`,
@@ -81,9 +83,7 @@ function captureOutputArtifact(
 }
 
 /** Serialize SVG, rasterize canvas, or reuse a safe image URL/data URL. */
-function captureImage(
-  element: Element
-): {
+function captureImage(element: Element): {
   content: string;
   imageHeight: number;
   imageWidth: number;

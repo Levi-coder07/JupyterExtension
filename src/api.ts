@@ -10,6 +10,7 @@ export interface INotebookRelationshipAnalysisResponse {
 }
 
 export interface OutputArtifact {
+  tableCells?: import('./tableCells').TableCellSnapshot[];
   cellId: string;
   cellIndex: number;
   content: string;

@@ -8,6 +8,114 @@ from unittest.mock import AsyncMock
 from LinkMaker import routes
 
 
+class ExecutionOutputContextTests(unittest.TestCase):
+    def test_table_targets_preserve_cells_and_reject_unknown_ids(self):
+        cells = [
+            {"id": "r0c0", "text": "Score", "rowSpan": 1, "colSpan": 2, "header": True},
+            {"id": "r1c0", "text": "86.76", "rowSpan": 1, "colSpan": 1, "header": False},
+            {"id": "r1c1", "text": "86.76", "rowSpan": 1, "colSpan": 1, "header": False},
+        ]
+        artifacts = routes._validate_output_artifacts([{
+            "outputId": "code:0", "cellId": "code", "cellIndex": 1, "outputIndex": 0,
+            "kind": "table", "mimeType": "text/html", "content": "<table></table>",
+            "tableCells": cells,
+        }])
+        markdown = [{"id": "md", "index": 0, "metadata": {}, "source": "Scores are equal."}]
+        relationship = {
+            "markdownCellId": "md", "markdownCellIndex": 0, "markdownText": "Scores are equal.",
+            "outputId": "code:0", "outputCellId": "code", "outputCellIndex": 1, "outputIndex": 0,
+            "componentType": "table_region", "componentDescription": "two score cells",
+            "confidence": 0.9, "reason": "Both scores are 86.76.",
+            "rectangles": [], "tableCellIds": ["r1c0", "r1c1"],
+        }
+        result = routes._materialize_output_relationships(markdown, artifacts, [relationship])
+        target = result[0]["relationships"][0]["outputTarget"]
+        self.assertEqual(target["tableCellIds"], ["r1c0", "r1c1"])
+        self.assertEqual(target["tableSnapshot"], cells)
+        self.assertEqual(target["rectangles"], [])
+        self.assertIn('"id": "r1c1"', routes._build_output_relationship_prompt(markdown, artifacts))
+        with self.assertLogs(routes.LOGGER, level="WARNING"):
+            result = routes._materialize_output_relationships(
+                markdown, artifacts, [{**relationship, "tableCellIds": ["r9c9"]}]
+            )
+        self.assertEqual(result[0]["relationships"], [])
+
+    def test_warning_filter_preserves_results_and_errors(self):
+        outputs = [
+            {"output_type": "stream", "name": "stderr", "text": [
+                "Diagnostic before\n",
+                "/lib/model.py:42: FutureWarning: default changing\n",
+                "  warnings.warn(message, FutureWarning)\n",
+                "/lib/model.py:50: ConvergenceWarning: convergence failed\n",
+                "  fit(data)\n",
+                "Diagnostic after\n",
+            ]},
+            {"output_type": "stream", "name": "stdout", "text": "Score: 0.95\n"},
+            {"output_type": "execute_result", "data": {"text/plain": "0.95"}},
+            {"output_type": "error", "ename": "ValueError", "evalue": "bad input"},
+        ]
+        self.assertEqual(routes._extract_execution_text(outputs),
+                         "Diagnostic before\nDiagnostic after\n\nScore: 0.95\n\n0.95\n\nValueError: bad input")
+
+    def test_warning_only_cell_has_no_output_context(self):
+        _, cells = routes._extract_notebook_cells({"cells": [{
+            "cell_type": "code", "source": "fit()", "outputs": [{
+                "output_type": "stream", "name": "stderr",
+                "text": "\u001b[31m/tmp/model.py:2: UserWarning: notice\u001b[0m\n  fit()\n",
+            }],
+        }]})
+        self.assertNotIn("outputText", routes._prompt_cell(cells[0]))
+
+    def test_execution_text_reaches_model_with_owning_cell(self):
+        notebook = {"cells": [
+            {"cell_type": "markdown", "source": "There are 42 rows."},
+            {"cell_type": "code", "source": "display(df)", "outputs": [
+                {"output_type": "stream", "text": ["Rows: ", "42\n"]},
+                {"output_type": "execute_result", "data": {
+                    "text/plain": "count\n42", "text/html": "<b>duplicate</b>"}},
+                {"output_type": "error", "ename": "ValueError", "evalue": "bad",
+                 "traceback": ["\u001b[31mframe one\u001b[0m", "frame two"]},
+            ]},
+            {"cell_type": "code", "source": "pass"},
+        ]}
+        markdown, code = routes._extract_notebook_cells(notebook)
+        create = AsyncMock(return_value=SimpleNamespace(
+            status="completed", output_text='{"relationships": []}'
+        ))
+        asyncio.run(routes._analyze_notebook_relationships(
+            SimpleNamespace(responses=SimpleNamespace(create=create)), markdown, code
+        ))
+        prompt = create.await_args.kwargs["input"]
+        sent_cells = json.loads(prompt.split("CODE CELLS\n", 1)[1])
+        self.assertEqual(sent_cells[0]["outputText"],
+                         "Rows: 42\n\ncount\n42\n\nValueError: bad\nframe one\nframe two")
+        self.assertNotIn("outputText", sent_cells[1])
+        self.assertNotIn("outputText", routes._prompt_cell(markdown[0]))
+
+    def test_missing_empty_and_nontext_outputs_add_no_context(self):
+        for outputs in (None, [], {}, [None], [
+            {"output_type": "stream", "text": " \n"},
+            {"output_type": "display_data", "data": {"image/png": "binary"}},
+            {"output_type": "display_data", "data": None},
+        ]):
+            with self.subTest(outputs=outputs):
+                self.assertEqual(routes._extract_execution_text(outputs), "")
+
+    def test_html_fallback_and_large_output(self):
+        text = routes._extract_execution_text([{
+            "output_type": "display_data", "data": {"text/html": [
+                "<style>hidden</style><table><tr><th>Count</th>",
+                "<td>42 &amp; more</td></tr></table><script>hidden</script>",
+            ]}
+        }])
+        self.assertIn("Count\n42 & more", text)
+        self.assertNotIn("hidden", text)
+        text = routes._extract_execution_text([
+            {"output_type": "stream", "text": "x" * 30_000}
+        ])
+        self.assertEqual(text, "x" * 20_000 + "\n[Output text truncated]")
+
+
 class DummyHandler:
     def __init__(self, contents_manager):
         self.contents_manager = contents_manager
@@ -306,7 +414,7 @@ class SaveMediaRouteTests(unittest.TestCase):
             "outputIndex": 0,
             "componentDescription": "the female survival-rate bar",
             "componentType": "bar",
-            "rectangle": {"x": 220, "y": 100, "width": 140, "height": 650},
+            "rectangles": [{"x": 220, "y": 100, "width": 140, "height": 650}],
             "confidence": 0.9,
             "reason": "The Markdown interprets the chart bar.",
         }
@@ -322,12 +430,12 @@ class SaveMediaRouteTests(unittest.TestCase):
         self.assertEqual(target["id"], "code-a:0")
         self.assertEqual(target["componentDescription"], "the female survival-rate bar")
         self.assertEqual(target["componentType"], "bar")
-        self.assertEqual(target["rectangle"]["height"], 650)
+        self.assertEqual(target["rectangles"][0]["height"], 650)
 
         valid_full_chart = {
             **relationship,
             "componentType": "whole_output",
-            "rectangle": {"x": 0, "y": 0, "width": 1000, "height": 1000},
+            "rectangles": [{"x": 0, "y": 0, "width": 1000, "height": 1000}],
         }
         full_chart = routes._materialize_output_relationships(
             markdown_cells, artifacts, [valid_full_chart]
@@ -338,7 +446,7 @@ class SaveMediaRouteTests(unittest.TestCase):
             "whole_output",
         )
 
-    def test_output_materialization_normalizes_image_pixel_coordinates(self):
+    def test_output_materialization_keeps_normalized_top_left_coordinates(self):
         markdown_cells = [{
             "id": "markdown-a",
             "index": 0,
@@ -366,7 +474,7 @@ class SaveMediaRouteTests(unittest.TestCase):
             "outputIndex": 0,
             "componentDescription": "the final histogram bar",
             "componentType": "bar",
-            "rectangle": {"x": 1080, "y": 480, "width": 60, "height": 60},
+            "rectangles": [{"x": 900, "y": 100, "width": 50, "height": 100}],
             "confidence": 0.9,
             "reason": "The Markdown refers to the final bar.",
         }
@@ -375,12 +483,12 @@ class SaveMediaRouteTests(unittest.TestCase):
             markdown_cells, artifacts, [relationship]
         )
 
-        rectangle = analyses[0]["relationships"][0]["outputTarget"]["rectangle"]
+        rectangle = analyses[0]["relationships"][0]["outputTarget"]["rectangles"][0]
         self.assertEqual(
-            rectangle, {"x": 900, "y": 800, "width": 50, "height": 100}
+            rectangle, {"x": 900, "y": 100, "width": 50, "height": 100}
         )
 
-    def test_output_materialization_accepts_legacy_normalized_coordinates(self):
+    def test_output_coordinates_do_not_depend_on_capture_dimensions(self):
         markdown_cells = [{
             "id": "markdown-a",
             "index": 0,
@@ -408,7 +516,7 @@ class SaveMediaRouteTests(unittest.TestCase):
             "outputIndex": 0,
             "componentDescription": "the final histogram bar",
             "componentType": "bar",
-            "rectangle": {"x": 920, "y": 800, "width": 40, "height": 40},
+            "rectangles": [{"x": 920, "y": 800, "width": 40, "height": 40}],
             "confidence": 0.9,
             "reason": "The Markdown refers to the final bar.",
         }
@@ -417,7 +525,7 @@ class SaveMediaRouteTests(unittest.TestCase):
             markdown_cells, artifacts, [relationship]
         )
 
-        rectangle = analyses[0]["relationships"][0]["outputTarget"]["rectangle"]
+        rectangle = analyses[0]["relationships"][0]["outputTarget"]["rectangles"][0]
         self.assertEqual(
             rectangle, {"x": 920, "y": 800, "width": 40, "height": 40}
         )
@@ -450,7 +558,7 @@ class SaveMediaRouteTests(unittest.TestCase):
             "outputIndex": 0,
             "componentDescription": "the infant-age bar",
             "componentType": "bar",
-            "rectangle": {"x": 10, "y": 10, "width": 20, "height": 20},
+            "rectangles": [{"x": 10, "y": 10, "width": 20, "height": 20}],
             "confidence": 0.9,
             "reason": "The Markdown describes the bar.",
         }
@@ -494,7 +602,7 @@ class SaveMediaRouteTests(unittest.TestCase):
             "outputIndex": 0,
             "componentDescription": "a chart component",
             "componentType": "bar",
-            "rectangle": {"x": 10, "y": 10, "width": 20, "height": 20},
+            "rectangles": [{"x": 10, "y": 10, "width": 20, "height": 20}],
             "confidence": 0.9,
             "reason": "The claim refers to the component.",
         }
@@ -534,7 +642,7 @@ class SaveMediaRouteTests(unittest.TestCase):
             "outputIndex": 2,
             "componentDescription": "the higher survival line",
             "componentType": "line",
-            "rectangle": {"x": 120, "y": 520, "width": 600, "height": 360},
+            "rectangles": [{"x": 120, "y": 520, "width": 600, "height": 360}],
             "confidence": 0.58,
             "reason": "The line supports the Markdown claim.",
         }
@@ -549,6 +657,46 @@ class SaveMediaRouteTests(unittest.TestCase):
         self.assertEqual(target["cellIndex"], 31)
         self.assertEqual(target["outputIndex"], 2)
         self.assertIn("corrected output identity", captured.output[0])
+
+    def test_output_markdown_index_correction_requires_matching_id_and_text(self):
+        markdown = [{"id": "cell-23", "index": 23, "metadata": {},
+                     "source": "- Most passengers are in 15-35 age range."}]
+        artifacts = [{"outputId": "plot:1", "cellId": "plot", "cellIndex": 24,
+                      "outputIndex": 1, "kind": "image", "imageWidth": 1000,
+                      "imageHeight": 1000}]
+        relationship = {
+            "markdownCellId": "cell-23", "markdownCellIndex": 24,
+            "markdownText": markdown[0]["source"], "outputId": "plot:1",
+            "outputCellId": "plot", "outputCellIndex": 24, "outputIndex": 1,
+            "componentDescription": "Age bins 15-35", "componentType": "bar_group",
+            "rectangles": [{"x": 90, "y": 120, "width": 360, "height": 360},
+                           {"x": 600, "y": 120, "width": 200, "height": 360}],
+            "confidence": 0.8, "reason": "The histogram shows the age range.",
+        }
+        with self.assertLogs(routes.LOGGER, level="WARNING") as logs:
+            result = routes._materialize_output_relationships(markdown, artifacts, [relationship])
+        self.assertEqual(result[0]["markdownCell"]["index"], 23)
+        self.assertEqual(len(result[0]["relationships"]), 1)
+        target = result[0]["relationships"][0]["outputTarget"]
+        self.assertEqual(target["rectangles"], relationship["rectangles"])
+        self.assertEqual(target["coordinateSystem"], "normalized-top-left-1000-v1")
+        self.assertEqual(target["geometryDebug"]["rawRectangles"], relationship["rectangles"])
+        self.assertEqual(target["geometryDebug"]["imageWidth"], 1000)
+        self.assertIn("corrected Markdown identity", logs.output[0])
+        self.assertEqual(relationship["markdownCellIndex"], 24)
+        for changes, rejection in [
+            ({"rectangles": []}, "invalid_rectangle"),
+            ({"rectangles": [{"x": 950, "y": 0, "width": 100, "height": 20}]}, "invalid_rectangle"),
+            ({"rectangles": [{"x": 1100, "y": 0, "width": 100, "height": 20}]}, "invalid_rectangle"),
+            ({"markdownText": "A different claim"}, "markdown_text_not_found"),
+            ({"markdownCellId": "unknown"}, "unknown_markdown_cell"),
+        ]:
+            with self.subTest(changes=changes), self.assertLogs(routes.LOGGER, level="WARNING") as logs:
+                result = routes._materialize_output_relationships(
+                    markdown, artifacts, [{**relationship, **changes}]
+                )
+            self.assertEqual(result[0]["relationships"], [])
+            self.assertIn(rejection, logs.output[0])
 
     def test_output_analysis_sends_images_and_html_with_valid_input_types(self):
         markdown_cells = [{

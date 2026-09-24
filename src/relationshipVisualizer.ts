@@ -4,6 +4,7 @@ import { CodeCell } from '@jupyterlab/cells';
 import { NotebookPanel } from '@jupyterlab/notebook';
 import { MimeModel } from '@jupyterlab/rendermime';
 import { Contents } from '@jupyterlab/services';
+import { captureTableCells, TableCellSnapshot } from './tableCells';
 
 interface RelationshipFile {
   markdownAnalyses?: MarkdownAnalysis[];
@@ -35,10 +36,14 @@ interface OutputRelationship {
   confidence?: number;
   markdownPortion?: TextPortion;
   outputTarget?: {
+    tableCellIds?: string[];
+    tableSnapshot?: TableCellSnapshot[];
     cellIndex?: number;
     componentDescription?: string;
     outputIndex?: number;
     rectangle?: IOutputRectangle;
+    rectangles?: IOutputRectangle[];
+    coordinateSystem?: string;
   };
   reason?: string;
 }
@@ -387,6 +392,15 @@ function applyOutputRelationshipHighlights(
         return;
       }
       const output = outputWidget.node;
+      const table = output.querySelector('table');
+      if (
+        target?.tableCellIds &&
+        (!table ||
+          JSON.stringify(captureTableCells(table)) !==
+            JSON.stringify(target.tableSnapshot))
+      ) {
+        return;
+      }
       const color =
         RELATIONSHIP_COLORS[relationshipNumber % RELATIONSHIP_COLORS.length];
       const portionKey = getMarkdownPortionKey(
@@ -434,11 +448,37 @@ function applyOutputRelationshipHighlights(
       output.dataset.linkmakerOutputRelationshipIds =
         output.dataset.linkmakerRelationshipIds ?? '';
       output.title = description;
-      if (isOutputRectangle(target?.rectangle)) {
+      for (const id of target?.tableCellIds ?? []) {
+        const box = document.createElement('div');
+        box.className = 'jp-LinkMaker-outputBoundingBox';
+        box.dataset.linkmakerBoundingRelationshipId =
+          String(relationshipNumber);
+        box.dataset.linkmakerTableCellId = id;
+        box.dataset.linkmakerTableSnapshot = JSON.stringify(
+          target?.tableSnapshot
+        );
+        box.style.setProperty('--jp-linkmaker-bounding-color', color);
+        box.setAttribute('aria-hidden', 'true');
+        box.title = description;
+        output.appendChild(box);
+      }
+      const rectangles =
+        target?.coordinateSystem === 'normalized-top-left-1000-v1'
+          ? (target.rectangles ?? []).filter(isOutputRectangle)
+          : target?.coordinateSystem === undefined &&
+              isOutputRectangle(target?.rectangle)
+            ? [
+                {
+                  ...target.rectangle,
+                  y: 1000 - target.rectangle.y - target.rectangle.height
+                }
+              ]
+            : [];
+      for (const rectangle of rectangles) {
         addOutputBoundingBox(
           output,
           relationshipNumber,
-          target.rectangle,
+          rectangle,
           color,
           description
         );

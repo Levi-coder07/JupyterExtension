@@ -25,11 +25,47 @@ existing code relationships in the same `.linkmaker.json` file under
 `LINKMAKER_OPENAI_OUTPUT_MODEL` to select the output-analysis model; it defaults
 to `LINKMAKER_OPENAI_MODEL`.
 
+The output-analysis prompt asks the model to interpret chart axes, scales,
+legends, and panels or table headers and rows before matching Markdown claims
+and selecting a supporting region. It checks evidence and rectangle bounds
+internally and returns a brief evidence explanation. Unreadable, contradictory,
+or unlocalizable evidence should produce no link. This remains one model request.
+Localization uses readable tick anchors to calibrate numeric ranges, then checks
+actual mark boundaries. Single-value and narrow-range claims must not use whole
+panel boxes; separated evidence uses multiple tight boxes. These are prompt
+constraints, not a guarantee of geometrically accurate predictions.
+
+New output links store `rectangles` (1–16 regions per relationship) with
+`coordinateSystem: "normalized-top-left-1000-v1"`. Coordinates are integers
+relative to the complete visual, with x increasing rightward and y downward.
+`geometryDebug` retains raw model rectangles and available image capture dimensions.
+Out-of-bounds boxes are rejected rather than interpreted as another coordinate
+format. Old saved single-rectangle links retain their bottom-left interpretation
+and are converted to top-left coordinates by the frontend when loaded.
+
+HTML tables now use `tableCellIds` instead of model-generated rectangles.
+The model receives physical cell IDs, text, header flags, and row/column spans.
+The frontend measures selected DOM cells directly, including separated cells.
+Saved table links include a content/structure snapshot and are suppressed when
+that snapshot no longer matches; rerun analysis after changing table contents.
+Images of tables still use the image bounding-box path. Refresh the browser and
+restart the server together when updating this table-targeting contract.
+
 ## Markdown-to-code relationship analysis
 
 Use the **Analyze notebook relationships** button in the Notebook Inspector to
 send all Markdown and code cells to the configured LLM in one notebook-wide
 request.
+When available, code-cell execution text (prints, errors, and textual results,
+including tables) is included as supporting context. The extractor
+excludes standard Python warning messages from stderr and their displayed source
+line; ordinary stderr diagnostics and execution errors are retained. Custom
+warning formats may remain. This filtering only affects analysis context.
+Plain-text representations
+are preferred, with Markdown or HTML text as fallbacks. Output context is capped
+at 20,000 characters per cell; cells without textual outputs use source alone.
+Links still target code source, not output text. Restart the JupyterLab server
+after updating the backend, then rerun analysis to regenerate existing links.
 It writes a checkpointed relationship map beside the notebook as
 `<notebook-name>.linkmaker.json`. The map contains exact Markdown and code
 source portions, cell IDs, cell indices, metadata, confidence, and the model's
