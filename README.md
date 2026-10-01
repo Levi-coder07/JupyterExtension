@@ -170,3 +170,41 @@ The `AGENTS.md` file provides guidance on:
 You can edit `AGENTS.md` to add project-specific conventions or adjust guidelines to match your team's practices. The file uses plain Markdown with Do/Don't patterns and references to actual project files.
 
 **Note**: `AGENTS.md` is living documentation. Update it when you change conventions, add dependencies, or discover new patterns. Include `AGENTS.md` updates in commits that modify workflows or coding standards.
+
+## Code-first exploration prototype
+
+On the `explore/ui-research-improvements` branch, choose **Explore code** in
+an open notebook's toolbar. Code and outputs remain in notebook order; Markdown
+is hidden until requested. Existing relationship highlights remain visible and
+margin markers (`↔` with a relationship count) expose navigation. Relationship
+portions in code use colored underlines instead of background fills. Hover a
+linked code cell or focus its marker to bring its related cells into a left rail
+as normally rendered Markdown while the code shifts right. Only the linked
+Markdown passages are highlighted; hovering does not dim the surrounding code.
+Click the code cell or marker to pin the relationship and blur unrelated code
+cells. Hovering activates every linked chart or table region for that cell
+during the overview. Pinning clears those overview regions; hovering
+an individual Markdown excerpt in the pinned view activates only that excerpt's
+matching chart or table region, and clicking the excerpt keeps that one region
+active. Each Markdown card initially renders only its related excerpt; use
+**Show whole cell** to expand its surrounding narrative. Linked text remains
+underlined without a background fill. The pinned Markdown includes a **Close
+relationship** control, and Escape closes the pinned relationship from anywhere
+in the notebook. **Show all Markdown** and **Go to original Markdown** reveal
+narrative context without deleting cells.
+
+**Back**, **Forward**, and the selectable **History** list revisit clicked
+relationships. Hover previews do not enter history. History is notebook-scoped,
+kept in memory (up to 50 visits), and cleared when relationships refresh or the
+notebook changes. Edits invalidate the explorer's markers until relationship
+analysis is refreshed. **Clear history** clears the current selection as well.
+**Close detail** (or Escape inside the panel) dismisses the panel; clicking a
+marker reopens it. **Exit code explorer** restores the normal layout. The
+code-first and two-column views are mutually exclusive.
+
+The prototype loads existing `.linkmaker.json` data and makes no new model
+request when navigating. It temporarily disables notebook windowing so hidden
+Markdown does not leave virtualized gaps; very large notebooks may use more
+memory. Left-rail previews use JupyterLab's Markdown renderer and the saved exact
+text portions, so headings, lists, emphasis, and relationship highlights remain
+visible.

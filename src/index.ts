@@ -1,3 +1,4 @@
+import { addCodeRelationshipExplorer } from './CodeRelationshipExplorer';
 import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin
@@ -38,9 +39,11 @@ const plugin: JupyterFrontEndPlugin<void> = {
     );
     tracker.forEach(panel => {
       addTwoColumnLayoutControl(panel);
+      addCodeRelationshipExplorer(panel, app.serviceManager.contents);
     });
     tracker.widgetAdded.connect((_, panel) => {
       addTwoColumnLayoutControl(panel);
+      addCodeRelationshipExplorer(panel, app.serviceManager.contents);
     });
 
     /**
@@ -77,6 +80,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
           return;
         }
         addTwoColumnLayoutControl(panel);
+        addCodeRelationshipExplorer(panel, app.serviceManager.contents);
         toggleTwoColumnLayout(panel);
       },
       isEnabled: () => tracker.currentWidget !== null

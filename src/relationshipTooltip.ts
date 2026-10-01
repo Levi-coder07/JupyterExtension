@@ -77,6 +77,10 @@ export function attachRelationshipTooltip(
     card.style.top = `${Math.max(8, Math.min(below, window.innerHeight - card.offsetHeight - 8))}px`;
   };
   const preview = (event: Event): void => {
+    if (node.closest('.jp-LinkMaker-codeExplorer')) {
+      close();
+      return;
+    }
     // Output widgets handle their own explanations rather than the parent cell.
     if (
       event.target instanceof Element &&
@@ -155,11 +159,11 @@ function renderContent(
   body.replaceChildren();
   const activeIds = new Set(content.activeIds);
   card.toggleAttribute('data-linkmaker-has-active', activeIds.size > 0);
-    const entries = [...content.entries].sort(
-      (left, right) =>
-        Number(activeIds.has(right.id)) - Number(activeIds.has(left.id))
-    );
-    entries.forEach(entry => {
+  const entries = [...content.entries].sort(
+    (left, right) =>
+      Number(activeIds.has(right.id)) - Number(activeIds.has(left.id))
+  );
+  entries.forEach(entry => {
     const explanation = document.createElement('div');
     explanation.className = 'jp-LinkMaker-reasonEntry';
     explanation.dataset.linkmakerRelationshipId = entry.id;

@@ -89,6 +89,7 @@ export function isTwoColumnLayout(panel: NotebookPanel): boolean {
 
 /** Toggle the active notebook between the default and two-column layouts. */
 export function toggleTwoColumnLayout(panel: NotebookPanel): boolean {
+  panel.content.node.dispatchEvent(new Event('linkmaker:exit-code-explorer'));
   if (isTwoColumnLayout(panel)) {
     const state = layoutStates.get(panel);
     if (state) {
@@ -611,7 +612,7 @@ function getLinkedOutputs(
 }
 
 /** Position saved normalized rectangles over the output's rendered visual. */
-function updateOutputBoundingBoxes(
+export function updateOutputBoundingBoxes(
   output: HTMLElement,
   relationshipIds: string[]
 ): void {

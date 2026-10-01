@@ -257,7 +257,7 @@
 .jp-Notebook
   .jp-LinkMaker-outputBoundingBox.jp-LinkMaker-outputBoundingBoxActive {
   display: block;
-    cursor: default;
+  cursor: default;
 }
 
 .jp-Notebook .jp-LinkMaker-codeRelated::before {
@@ -494,4 +494,218 @@
 .jp-Notebook [data-linkmaker-relationship-ids]:focus-visible {
   outline: 2px solid var(--jp-brand-color1);
   outline-offset: -2px;
+}
+
+/* Code-first exploration reveals narrative context only when requested. */
+.jp-LinkMaker-codeExplorer .jp-Notebook {
+  transition: padding-left 160ms ease-out;
+}
+
+.jp-LinkMaker-codeExplorer.jp-LinkMaker-explorerRelationshipVisible
+  .jp-Notebook {
+  padding-left: 350px;
+}
+
+.jp-LinkMaker-codeExplorer:not(.jp-LinkMaker-explorerShowMarkdown)
+  .jp-MarkdownCell:not(.jp-LinkMaker-explorerRelatedMarkdown) {
+  display: none !important;
+}
+
+.jp-LinkMaker-codeExplorer .jp-CodeCell {
+  position: relative;
+  margin-left: 48px;
+}
+
+.jp-LinkMaker-codeExplorer .jp-Cell.jp-LinkMaker-codeRelated,
+.jp-LinkMaker-codeExplorer .jp-Cell.jp-LinkMaker-hoverLinkedCode {
+  --jp-linkmaker-cell-background: transparent;
+  --jp-linkmaker-cell-outline: none;
+
+  background: transparent !important;
+  border-left-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.jp-LinkMaker-codeExplorer .cm-content .jp-LinkMaker-codePortionHighlight {
+  background-color: transparent !important;
+  text-decoration-line: underline;
+  text-decoration-color: var(--jp-linkmaker-code-highlight-color);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.jp-LinkMaker-codeExplorer .jp-LinkMaker-explorerRelatedMarkdown {
+  display: block !important;
+  position: absolute !important;
+  left: var(--jp-linkmaker-explorer-related-left);
+  top: var(--jp-linkmaker-explorer-related-top);
+  width: 320px;
+  box-sizing: border-box;
+  z-index: 6;
+  animation: jp-linkmaker-related-markdown-in 160ms ease-out;
+  overflow: auto;
+  max-height: min(60vh, 520px);
+  padding: 12px;
+  background: var(--jp-layout-color1);
+  border: 1px solid var(--jp-border-color1);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 16%);
+}
+
+.jp-LinkMaker-explorerMarkdownHighlight {
+  padding: 1px 0;
+  color: inherit;
+  background: transparent;
+  text-decoration-line: underline;
+  text-decoration-color: var(--jp-linkmaker-active-color);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.jp-LinkMaker-explorerMarkdownPortion,
+.jp-LinkMaker-explorerMarkdownPortion * {
+  background: transparent !important;
+  text-decoration-line: underline;
+  text-decoration-color: var(--jp-linkmaker-active-color);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.jp-LinkMaker-explorerMarkdownPortion + .jp-LinkMaker-explorerMarkdownPortion {
+  margin-top: 10px;
+}
+
+.jp-LinkMaker-explorerMarkdownDetailActive,
+.jp-LinkMaker-explorerMarkdownDetailActive * {
+  text-decoration-thickness: 3px !important;
+  text-underline-offset: 4px;
+}
+
+.jp-LinkMaker-explorerMarkdownControls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.jp-LinkMaker-explorerMarkdownControls button {
+  padding: 4px 8px;
+  color: var(--jp-ui-font-color1);
+  background: var(--jp-layout-color2);
+  border: 1px solid var(--jp-border-color2);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.jp-LinkMaker-explorerCloseRelationship {
+  color: var(--jp-error-color1) !important;
+}
+
+.jp-LinkMaker-relationshipMarker {
+  position: absolute;
+  left: -46px;
+  top: 8px;
+  border: 1px solid var(--jp-border-color1);
+  border-radius: 12px;
+  padding: 4px;
+  background: var(--jp-layout-color1);
+  color: var(--jp-brand-color1);
+  cursor: pointer;
+}
+
+.jp-LinkMaker-explorerPanel {
+  position: absolute;
+  right: 8px;
+  top: 80px;
+  bottom: 8px;
+  width: 320px;
+  overflow: auto;
+  padding: 12px;
+  box-sizing: border-box;
+  z-index: 5;
+  background: var(--jp-layout-color1);
+  color: var(--jp-ui-font-color1);
+  border: 1px solid var(--jp-border-color1);
+  border-radius: 8px;
+}
+
+.jp-LinkMaker-explorerPanel[hidden] {
+  display: none;
+}
+
+.jp-LinkMaker-explorerPanel h2 {
+  font-size: 16px;
+}
+
+.jp-LinkMaker-explorerPanel button {
+  display: block;
+  margin: 6px 0;
+  padding: 6px 8px;
+  max-width: 100%;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  color: var(--jp-ui-font-color1);
+  background: var(--jp-layout-color2);
+  border: 1px solid var(--jp-border-color2);
+  border-radius: 4px;
+}
+
+.jp-LinkMaker-explorerPanel button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.jp-LinkMaker-explorerPanel button[aria-pressed='true'],
+.jp-LinkMaker-explorerPanel button[aria-current='true'] {
+  border-color: var(--jp-brand-color1);
+}
+
+.jp-LinkMaker-explorerPanel blockquote {
+  margin: 12px 0;
+  padding: 8px;
+  border-left: 3px solid var(--jp-brand-color1);
+  white-space: pre-wrap;
+}
+
+.jp-LinkMaker-explorerControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.jp-LinkMaker-codeExplorer
+  .jp-LinkMaker-explorerEvidence.jp-LinkMaker-outputBoundingBox:not(
+    .jp-LinkMaker-outputBoundingBoxActive
+  ) {
+  display: none;
+}
+
+.jp-LinkMaker-explorerPanel button:focus-visible,
+.jp-LinkMaker-relationshipMarker:focus-visible {
+  outline: 2px solid var(--jp-brand-color1);
+  outline-offset: 2px;
+}
+
+@keyframes jp-linkmaker-related-markdown-in {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jp-LinkMaker-codeExplorer .jp-Notebook {
+    transition: none;
+  }
+
+  .jp-LinkMaker-codeExplorer .jp-LinkMaker-explorerRelatedMarkdown {
+    animation: none;
+  }
 }
